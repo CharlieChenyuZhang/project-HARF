@@ -24,7 +24,7 @@ export default function Home() {
             A Living Memory of the AI transition
           </h1>
           <p className="mt-8 max-w-2xl font-serif text-2xl leading-snug text-card/90 sm:text-3xl">
-            We are living through a transformation we do not yet fully understand.
+            We are experiencing a transformation we do not yet fully understand.
           </p>
           <p className="mt-5 max-w-xl text-lg text-card/70">How is AI changing the way you think, learn, work, and feel?</p>
           <div className="mt-10">
