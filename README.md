@@ -3,7 +3,7 @@
 A Living Memory of the AI transition: a platform where people share how AI is changing the way they think, learn,
 work and feel, and where HARF editors review, theme and publish anonymized excerpts.
 
-**Preview:** https://main.d1teugon3t49oi.amplifyapp.com (private testing environment, fictional sample data only)
+**Live:** https://harf.media (also https://www.harf.media and https://main.d1teugon3t49oi.amplifyapp.com). The archive currently holds fictional sample entries.
 
 ## What's here
 
