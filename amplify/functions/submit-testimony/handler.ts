@@ -4,7 +4,13 @@ import { DynamoDBDocumentClient, PutCommand, QueryCommand, TransactWriteCommand 
 import { CopyObjectCommand, DeleteObjectCommand, HeadObjectCommand, S3Client } from "@aws-sdk/client-s3";
 import type { Schema } from "../../data/resource";
 import {
+  ACADEMIC_STAGES,
+  AGE_RANGES,
+  AI_DURATIONS,
+  AI_TOOLS,
+  AI_USES,
   AI_USE_FREQUENCIES,
+  GENDERS,
   CONSENT_VERSION,
   FEELINGS,
   LANGUAGES,
@@ -178,6 +184,13 @@ export const handler: Schema["submitTestimony"]["functionHandler"] = async (even
     );
     const entryNumber = (previous.Count ?? 0) + 1;
 
+    const manyOf = <T extends readonly string[]>(values: (string | null)[] | null | undefined, allowed: T) => {
+      const picked = [...new Set((values ?? []).filter((v): v is string => !!v).map((v) => oneOf(v, allowed)!))];
+      return picked.length ? picked : undefined;
+    };
+    const gender = oneOf(args.gender, GENDERS);
+    const mainAiTool = oneOf(args.mainAiTool, AI_TOOLS);
+
     const feelings = (args.feelings ?? [])
       .filter((f): f is string => typeof f === "string")
       .map((f) => oneOf(f, FEELINGS)!)
@@ -216,6 +229,16 @@ export const handler: Schema["submitTestimony"]["functionHandler"] = async (even
       relationship: oneOf(args.relationship, RELATIONSHIPS),
       fieldOfWork: clean(args.fieldOfWork),
       country: clean(args.country),
+      countryOfBirth: clean(args.countryOfBirth),
+      ageRange: oneOf(args.ageRange, AGE_RANGES),
+      gender,
+      genderSelfDescribed: gender === "Self-describe" ? clean(args.genderSelfDescribed) : undefined,
+      firstLanguage: clean(args.firstLanguage),
+      academicStage: oneOf(args.academicStage, ACADEMIC_STAGES),
+      mainAiTool,
+      otherAiTools: manyOf(args.otherAiTools, AI_TOOLS)?.filter((t) => t !== mainAiTool && t !== "I don't use AI"),
+      aiDuration: oneOf(args.aiDuration, AI_DURATIONS),
+      aiUses: manyOf(args.aiUses, AI_USES),
       aiUseFrequency: oneOf(args.aiUseFrequency, AI_USE_FREQUENCIES),
       feelings: feelings.length ? feelings : undefined,
       feelingsOther: feelings.includes("Other") ? clean(args.feelingsOther) : undefined,

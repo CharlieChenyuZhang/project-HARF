@@ -314,10 +314,19 @@ function TestimonyDetail({
       ) : null}
 
       <dl className="grid gap-x-8 gap-y-3 text-sm sm:grid-cols-3">
+        <Meta label="Age range" value={t.ageRange} />
+        <Meta label="Gender" value={t.gender === "Self-describe" ? t.genderSelfDescribed || "Self-described" : t.gender} />
+        <Meta label="Academic stage" value={t.academicStage} />
+        <Meta label="Country now" value={t.country} />
+        <Meta label="Country of birth" value={t.countryOfBirth} />
+        <Meta label="First language" value={t.firstLanguage} />
         <Meta label="Relationship" value={t.relationship} />
         <Meta label="Field" value={t.fieldOfWork} />
-        <Meta label="Country" value={t.country} />
+        <Meta label="Main AI tool" value={t.mainAiTool} />
+        <Meta label="Other AI tools" value={(t.otherAiTools ?? []).filter(Boolean).join(", ")} />
+        <Meta label="Using AI for" value={t.aiDuration} />
         <Meta label="AI use" value={t.aiUseFrequency} />
+        <Meta label="Main uses" value={(t.aiUses ?? []).filter(Boolean).join(", ")} />
         <Meta
           label="Feelings"
           value={[...(t.feelings ?? []).filter((f) => f !== "Other"), t.feelingsOther].filter(Boolean).join(", ")}

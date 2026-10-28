@@ -31,6 +31,50 @@ export const MAIN_PROMPT =
 
 export const RELATIONSHIPS = ["Student", "Educator", "Researcher", "Professional", "Other"] as const;
 
+// Optional "About you" questions. Every one can be skipped.
+export const AGE_RANGES = ["18–24", "25–34", "35–44", "45–54", "55–64", "65+"] as const;
+
+export const GENDERS = ["Woman", "Man", "Non-binary", "Self-describe"] as const;
+
+export const ACADEMIC_STAGES = [
+  "Undergraduate",
+  "Master's",
+  "PhD",
+  "Postdoc",
+  "Faculty",
+  "Staff",
+  "Not in academia",
+] as const;
+
+// Optional "Your AI use" questions.
+export const AI_TOOLS = [
+  "ChatGPT (OpenAI)",
+  "Claude (Anthropic)",
+  "Gemini (Google)",
+  "DeepSeek",
+  "Copilot (Microsoft)",
+  "Meta AI",
+  "Perplexity",
+  "Grok (xAI)",
+  "Le Chat (Mistral)",
+  "Qwen (Alibaba)",
+  "Other",
+  "I don't use AI",
+] as const;
+
+export const AI_DURATIONS = ["Under 6 months", "6–12 months", "1–2 years", "2+ years"] as const;
+
+export const AI_USES = [
+  "Writing",
+  "Studying",
+  "Research and reading",
+  "Coding",
+  "Brainstorming",
+  "Work tasks",
+  "Conversation or support",
+  "Other",
+] as const;
+
 export const AI_USE_FREQUENCIES = [
   "Several times a day",
   "About daily",
@@ -81,11 +125,11 @@ export type EditorialStatus = (typeof EDITORIAL_STATUSES)[number];
  * The consent wording a participant agrees to. Bump the version whenever the
  * text changes: every testimony stores the version it was submitted under.
  */
-export const CONSENT_VERSION = "2026-10-28.v1";
+export const CONSENT_VERSION = "2026-10-28.v2";
 
 export const CONSENT_TEXT = {
   research:
-    "I agree that HARF may store my contribution and analyze it for the research purposes described in the privacy notice. This is required to submit.",
+    "I am 18 or older, and I agree that HARF may store my contribution and analyze it for the research purposes described in the privacy notice. This is required to submit.",
   publish:
     "HARF may publish an anonymized excerpt of my contribution in the Living Archive after editorial review. Nothing is published automatically.",
   contact:

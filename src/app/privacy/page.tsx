@@ -12,12 +12,12 @@ const SECTIONS: { icon: LucideIcon; title: string; body: string }[] = [
   {
     icon: Database,
     title: "What we collect",
-    body: "Your testimony, any images, audio or video you attach, and, only if you choose, a little context (role, field, country, AI use, feelings). No name or institution is required.",
+    body: "Your testimony and any images, audio or video you attach. Only if you choose: age range, gender, countries, first language, academic stage, field, and how you use and feel about AI. No name or institution is required. HARF is for people aged 18 and over.",
   },
   {
     icon: Eye,
     title: "Publication",
-    body: "Nothing is published automatically. With your permission, an editor may publish a short anonymized excerpt. The system refuses anything without that permission.",
+    body: "Nothing is published automatically. With your permission, an editor may publish a short anonymized excerpt with only a broad category such as “Student”. Your other answers are never published.",
   },
   {
     icon: Mail,
