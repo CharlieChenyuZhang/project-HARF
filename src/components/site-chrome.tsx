@@ -4,7 +4,8 @@ import { MobileMenu } from "./mobile-menu";
 
 export const SURVEY_URL = "https://tally.so/r/RWKrVl";
 
-const PREVIEW = process.env.NEXT_PUBLIC_HARF_PREVIEW !== "false";
+// Opt-in testing banner: build with NEXT_PUBLIC_HARF_PREVIEW=true to show it.
+const PREVIEW = process.env.NEXT_PUBLIC_HARF_PREVIEW === "true";
 
 export const NAV = [
   { href: "/share/", label: "Share" },

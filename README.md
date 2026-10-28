@@ -72,5 +72,5 @@ For an isolated personal backend instead: `AWS_PROFILE=chenyu npx ampx sandbox`.
 ## Before opening to real submissions
 
 - Finalize the privacy notice (`/privacy/`) and add a contact address for removal requests.
-- Set `NEXT_PUBLIC_HARF_PREVIEW=false` to remove the testing banner, and run `npm run seed:remove`.
+- Run `npm run seed:remove` to delete the fictional samples. (A "testing preview" banner can be shown by building with `NEXT_PUBLIC_HARF_PREVIEW=true`.)
 - Consider AWS WAF rate limiting on the AppSync API, and a custom domain.
