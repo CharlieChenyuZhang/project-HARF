@@ -12,7 +12,11 @@ function toCsv(rows: Row[]) {
   const columns = Array.from(new Set(rows.flatMap((r) => Object.keys(r))));
   const cell = (v: unknown) => {
     if (v == null) return "";
-    const s = Array.isArray(v) ? v.filter((x) => x != null).join("; ") : String(v);
+    const s = Array.isArray(v)
+      ? v.filter((x) => x != null).map((x) => (typeof x === "object" ? JSON.stringify(x) : String(x))).join("; ")
+      : typeof v === "object"
+        ? JSON.stringify(v)
+        : String(v);
     return /[",\n\r]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
   };
   return [columns.join(","), ...rows.map((r) => columns.map((c) => cell(r[c])).join(","))].join("\r\n");
@@ -32,7 +36,7 @@ const stamp = () => new Date().toISOString().slice(0, 16).replace(/[:T]/g, "-");
 const DATASETS = {
   testimonies: {
     label: "Testimonies",
-    description: "Original text, context, consent records, editorial status and themes. No contact details.",
+    description: "Original text, context, consent, editorial status, themes and attachment keys. No contact details.",
     fetch: () => listAll((nextToken) => client.models.Testimony.list({ ...auth, nextToken, limit: 500 })),
   },
   excerpts: {

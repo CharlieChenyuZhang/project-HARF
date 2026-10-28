@@ -99,6 +99,33 @@ export const LIMITS = {
   excerptMax: 2000,
 } as const;
 
+/** Attachments: images, audio and video, checked again on the server. */
+export const MEDIA = {
+  maxFiles: 5,
+  maxBytes: 50 * 1024 * 1024,
+  types: [
+    "image/jpeg",
+    "image/png",
+    "image/webp",
+    "image/gif",
+    "image/heic",
+    "image/heif",
+    "audio/mpeg",
+    "audio/mp4",
+    "audio/x-m4a",
+    "audio/wav",
+    "audio/webm",
+    "audio/ogg",
+    "video/mp4",
+    "video/quicktime",
+    "video/webm",
+  ],
+} as const;
+
+export function isAllowedMediaType(type: string): boolean {
+  return (MEDIA.types as readonly string[]).includes(type);
+}
+
 /** Participant codes look like HARF-7K2M-QX9D-4TPA (60 bits of entropy). */
 export const PARTICIPANT_CODE_PATTERN = /^HARF-[A-Z2-9]{4}-[A-Z2-9]{4}-[A-Z2-9]{4}$/;
 export const PARTICIPANT_CODE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";

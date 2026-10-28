@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { client, errorMessage, listAll, type Contact, type Testimony } from "@/lib/amplify";
 import { EDITORIAL_STATUSES, LANGUAGES, THEMES, type EditorialStatus } from "@/lib/harf";
+import { MediaGallery } from "./media-gallery";
 import { Badge, Notice, STATUS_LABEL, inputClass, primaryButton, secondaryButton } from "./ui";
 
 const auth = { authMode: "userPool" } as const;
@@ -110,7 +111,14 @@ export function TestimonyReview() {
                 </span>
                 <span className="mt-1.5 line-clamp-2 block font-serif text-[0.95rem] leading-snug">{t.originalText}</span>
                 <span className="mt-1.5 block text-xs text-muted">
-                  {[t.relationship, t.fieldOfWork, t.synthetic ? "Synthetic" : null].filter(Boolean).join(" · ")}
+                  {[
+                    t.relationship,
+                    t.fieldOfWork,
+                    t.media?.length ? `${t.media.length} attachment${t.media.length > 1 ? "s" : ""}` : null,
+                    t.synthetic ? "Synthetic" : null,
+                  ]
+                    .filter(Boolean)
+                    .join(" · ")}
                 </span>
               </button>
             </li>
@@ -275,6 +283,13 @@ function TestimonyDetail({
           <p className="whitespace-pre-wrap font-serif text-lg leading-relaxed">{t.originalText}</p>
         </div>
       </div>
+
+      {t.media?.length ? (
+        <div>
+          <p className="eyebrow mb-3">Attachments · {t.media.length}</p>
+          <MediaGallery media={t.media.filter((m): m is NonNullable<typeof m> => !!m)} />
+        </div>
+      ) : null}
 
       {history.length > 1 ? (
         <div>

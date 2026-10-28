@@ -4,7 +4,9 @@ import { CheckCircle2, ChevronDown, Database, Eye, Lightbulb, Mail, PenLine, Shi
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useId, useState, type ReactNode } from "react";
+import { MediaPicker } from "./media-picker";
 import { CircleLink } from "@/components/circle-link";
+import { uploadData } from "aws-amplify/storage";
 import { client, errorMessage, type WeeklyQuestion } from "@/lib/amplify";
 import {
   AI_USE_FREQUENCIES,
@@ -82,6 +84,8 @@ export function ShareFlow() {
   const [contactName, setContactName] = useState("");
   const [contactEmail, setContactEmail] = useState("");
   const [website, setWebsite] = useState("");
+  const [files, setFiles] = useState<File[]>([]);
+  const [uploadStatus, setUploadStatus] = useState<string | null>(null);
 
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -126,6 +130,20 @@ export function ShareFlow() {
     setSubmitting(true);
     setError(null);
     try {
+      // Files are uploaded only now, after consent. The server checks them and
+      // moves them somewhere only editors can read.
+      const mediaKeys: string[] = [];
+      for (const [i, file] of files.entries()) {
+        setUploadStatus(`Uploading ${i + 1} of ${files.length}…`);
+        const name = file.name.replace(/[^A-Za-z0-9._-]+/g, "-").slice(-100) || "file";
+        const { path } = await uploadData({
+          path: `uploads/${crypto.randomUUID()}/${name}`,
+          data: file,
+          options: { contentType: file.type },
+        }).result;
+        mediaKeys.push(path);
+      }
+      setUploadStatus(files.length ? "Saving…" : null);
       const { data, errors } = await client.mutations.submitTestimony({
         text,
         language,
@@ -145,6 +163,7 @@ export function ShareFlow() {
         consentVersion: CONSENT_VERSION,
         contactName: consentContact ? contactName || undefined : undefined,
         contactEmail: consentContact ? contactEmail || undefined : undefined,
+        mediaKeys,
         website: website || undefined,
       });
       if (!data) throw new Error(errorMessage(errors, "Something went wrong. Please try again."));
@@ -155,6 +174,7 @@ export function ShareFlow() {
       setError(e instanceof Error ? e.message : "Something went wrong. Please try again.");
     } finally {
       setSubmitting(false);
+      setUploadStatus(null);
     }
   }
 
@@ -254,6 +274,10 @@ export function ShareFlow() {
                 ? `${LIMITS.testimonyMin - textLength} more characters to continue`
                 : `${textLength.toLocaleString()} characters`}
             </span>
+          </div>
+
+          <div className="mt-8">
+            <MediaPicker files={files} onChange={setFiles} />
           </div>
 
           <div className="mt-8 grid gap-6 sm:grid-cols-2">
@@ -460,7 +484,7 @@ export function ShareFlow() {
               onClick={submit}
               className={primaryButton}
             >
-              {submitting ? "Submitting…" : "Submit testimony"}
+              {submitting ? (uploadStatus ?? "Submitting…") : "Submit testimony"}
             </button>
           </Nav>
           <p className="mt-4 text-right text-xs text-muted">Consent version {CONSENT_VERSION}</p>

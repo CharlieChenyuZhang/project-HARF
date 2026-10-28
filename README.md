@@ -31,6 +31,10 @@ Testimony       private   original text (immutable), context, consent record + v
 Contact         private   separate table; only exists if the participant opted in to follow-up
 Excerpt         public    edited, anonymized excerpt; no link back to the private testimony
 WeeklyQuestion  public    Question of the Week, managed in the dashboard
+
+S3 bucket (Amplify Storage)
+uploads/        guests can write, never read; expires after 1 day
+media/<id>/     files accepted with a testimony; editors only
 ```
 
 Rules enforced on the server, not just in the UI:
@@ -44,7 +48,11 @@ Rules enforced on the server, not just in the UI:
 - `removeTestimony` deletes a testimony together with its contact record and published excerpt.
 - **Longitudinal participation:** each submission returns a code like `HARF-7K2M-QX9D-4TPA`. Only its SHA-256 hash is
   stored (`participantRef`, indexed), so a returning participant's entries are linked without identifying them.
-- Point-in-time recovery (35 days) is enabled on every table. Self sign-up is disabled in Cognito.
+- **Attachments:** up to 5 images, audio or video files (50 MB each) per testimony. Files upload only when the
+  participant submits, after consent. `submitTestimony` checks each file's type and size and moves it to
+  `media/<testimonyId>/`, which only editors can read. The testimony stores just the keys.
+- Point-in-time recovery (35 days) is enabled on every table; the media bucket is versioned with old versions
+  expiring after 35 days. Self sign-up is disabled in Cognito.
 
 Shared vocabulary (themes, prompts, feelings, consent text and version) lives in `src/lib/harf.ts` and is used by
 both the site and the Lambda functions. **Bump `CONSENT_VERSION` whenever consent wording changes.**

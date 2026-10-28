@@ -19,6 +19,9 @@ import { editorial } from "../functions/editorial/resource";
  *                carries no reference back to the private testimony.
  * WeeklyQuestion public. The Question of the Week, managed by editors.
  *
+ * Attached media live in S3 (see storage/resource.ts); a testimony stores
+ * only their keys and metadata.
+ *
  * Longitudinal participation: participants receive a private code. Only a
  * SHA-256 hash of it (participantRef) is stored, which links a person's
  * testimonies over time without identifying them.
@@ -31,6 +34,12 @@ const editorsReadOnly = (allow: Parameters<Parameters<ReturnType<typeof a.string
 const schema = a.schema({
   EditorialStatus: a.enum(["NEW", "IN_REVIEW", "APPROVED", "PUBLISHED", "ARCHIVED", "WITHDRAWN"]),
   Channel: a.enum(["OPEN", "WEEKLY_QUESTION"]),
+  MediaItem: a.customType({
+    key: a.string().required(),
+    name: a.string(),
+    contentType: a.string(),
+    size: a.integer(),
+  }),
 
   Testimony: a
     .model({
@@ -56,6 +65,7 @@ const schema = a.schema({
       consentVersion: a.string().required().authorization(editorsReadOnly),
       consentRecordedAt: a.datetime().required().authorization(editorsReadOnly),
       contactId: a.id().authorization(editorsReadOnly),
+      media: a.ref("MediaItem").array().authorization(editorsReadOnly),
       synthetic: a.boolean().authorization(editorsReadOnly),
       // Editorial layer. Kept apart from the original text.
       editorialStatus: a.ref("EditorialStatus").required(),
@@ -128,6 +138,7 @@ const schema = a.schema({
       consentVersion: a.string().required(),
       contactName: a.string(),
       contactEmail: a.string(),
+      mediaKeys: a.string().array(), // S3 keys under uploads/, from the browser upload
       website: a.string(), // honeypot: real people leave this empty
     })
     .returns(a.ref("SubmitTestimonyResult"))

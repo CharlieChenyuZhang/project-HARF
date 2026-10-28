@@ -12,7 +12,7 @@ const SECTIONS: { icon: LucideIcon; title: string; body: string }[] = [
   {
     icon: Database,
     title: "What we collect",
-    body: "Your testimony and, only if you choose, a little context (role, field, country, AI use, feelings). No name or institution is required.",
+    body: "Your testimony, any images, audio or video you attach, and, only if you choose, a little context (role, field, country, AI use, feelings). No name or institution is required.",
   },
   {
     icon: Eye,
@@ -32,12 +32,12 @@ const SECTIONS: { icon: LucideIcon; title: string; body: string }[] = [
   {
     icon: Lock,
     title: "Storage & protection",
-    body: "Amazon Web Services, United States (Ohio). Encrypted in transit and at rest. Only signed-in editors can see private records.",
+    body: "Amazon Web Services, United States (Ohio): text in a database, attachments in private file storage. Encrypted in transit and at rest. Only signed-in editors can see private records or files.",
   },
   {
     icon: Hourglass,
     title: "Retention & removal",
-    body: "Kept for the life of the archive unless you ask us to remove it. Removal also clears backups after 35 days.",
+    body: "Kept for the life of the archive unless you ask us to remove it. Removal deletes the text and attachments; backups clear after 35 days.",
   },
 ];
 
