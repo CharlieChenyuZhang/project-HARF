@@ -6,7 +6,7 @@
 set -euo pipefail
 
 EMAIL="${1:?usage: scripts/invite-editor.sh <email>}"
-OUTPUTS="$(dirname "$0")/../amplify_outputs.json"
+OUTPUTS="$(cd "$(dirname "$0")/.." && pwd)/amplify_outputs.json"
 POOL_ID=$(node -p "require('$OUTPUTS').auth.user_pool_id")
 REGION=$(node -p "require('$OUTPUTS').auth.aws_region")
 
