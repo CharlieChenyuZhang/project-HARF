@@ -76,6 +76,24 @@ export default function Home() {
         </div>
       </section>
 
+      {/* Founding inquiry */}
+      <section className="mx-auto max-w-6xl px-5 pt-24 sm:pt-32">
+        <div className="max-w-3xl">
+          <p className="font-serif text-2xl italic leading-snug text-gold sm:text-3xl">
+            A founding inquiry into how human capacities — and the signals by which we recognize them — change under
+            continuous machine mediation.
+          </p>
+          <p className="mt-8 font-serif text-lg leading-relaxed text-ink-soft sm:text-xl">
+            Documenting how artificial intelligence is changing human capacities and the signals through which we
+            recognize thought, authorship, understanding, contribution, judgement, and responsibility.
+          </p>
+          <p className="mt-8 font-serif text-lg font-semibold leading-snug sm:text-xl">
+            The founding year begins a longitudinal record of that transition: Living Memory
+          </p>
+          <span aria-hidden className="mt-8 block h-0.5 w-24 bg-gold" />
+        </div>
+      </section>
+
       {/* Principle */}
       <section className="mx-auto max-w-4xl px-5 py-24 text-center sm:py-32">
         <blockquote className="font-serif text-3xl leading-tight sm:text-5xl">

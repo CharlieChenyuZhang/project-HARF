@@ -16,6 +16,7 @@
   --navy: #1b2136;
   --navy-soft: #2a3150;
   --ok: #2f5d3a;
+  --gold: #8f733a;
 }
 
 @theme inline {
@@ -31,6 +32,7 @@
   --color-ok: var(--ok);
   --color-navy: var(--navy);
   --color-navy-soft: var(--navy-soft);
+  --color-gold: var(--gold);
   --font-serif: var(--font-newsreader), Georgia, "Times New Roman", serif;
   --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
 }
