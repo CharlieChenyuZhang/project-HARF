@@ -3,7 +3,7 @@
 import { CheckCircle2, ChevronDown, Database, Eye, Lightbulb, Mail, PenLine, ShieldCheck, UserRound, type LucideIcon } from "lucide-react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { useEffect, useId, useState, type ReactNode } from "react";
+import { useEffect, useId, useRef, useState, type ReactNode } from "react";
 import { MediaPicker } from "./media-picker";
 import { CircleLink } from "@/components/circle-link";
 import { uploadData } from "aws-amplify/storage";
@@ -13,7 +13,6 @@ import {
   CONSENT_TEXT,
   CONSENT_VERSION,
   FEELINGS,
-  LANGUAGES,
   LIMITS,
   MAIN_PROMPT,
   OPTIONAL_PROMPTS,
@@ -49,12 +48,6 @@ const STEPS: { id: Step; label: string; icon: LucideIcon }[] = [
   { id: "consent", label: "Your choices", icon: ShieldCheck },
 ];
 
-function browserLanguage() {
-  if (typeof navigator === "undefined") return "en";
-  const code = navigator.language?.slice(0, 2).toLowerCase();
-  return LANGUAGES.some((l) => l.code === code) ? code : "en";
-}
-
 export function ShareFlow() {
   const params = useSearchParams();
   const weeklyId = params.get("weekly");
@@ -65,7 +58,7 @@ export function ShareFlow() {
   // Step 1
   const [text, setText] = useState("");
   const [promptId, setPromptId] = useState<string | null>(null);
-  const [language, setLanguage] = useState("en");
+  const promptsRef = useRef<HTMLDetailsElement>(null);
   const [returning, setReturning] = useState(false);
   const [code, setCode] = useState("");
 
@@ -93,9 +86,8 @@ export function ShareFlow() {
 
   // Restore browser-only state after hydration (the page is statically rendered).
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setLanguage(browserLanguage());
     const draft = readStorage(DRAFT_KEY, session);
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (draft) setText(draft);
     const saved = readStorage(CODE_KEY);
     if (saved) {
@@ -146,7 +138,6 @@ export function ShareFlow() {
       setUploadStatus(files.length ? "Saving…" : null);
       const { data, errors } = await client.mutations.submitTestimony({
         text,
-        language,
         channel: weekly ? "WEEKLY_QUESTION" : "OPEN",
         promptId: weekly ? undefined : promptId ?? undefined,
         weeklyQuestionId: weekly?.id,
@@ -223,7 +214,7 @@ export function ShareFlow() {
               <p className="eyebrow">Share your experience</p>
               <h1 className="mt-4 font-serif text-3xl leading-tight sm:text-5xl">{MAIN_PROMPT}</h1>
               <p className="mt-4 text-muted">Any language, any length. No right answers.</p>
-              <details className="group mt-8 rounded-lg bg-card ring-1 ring-rule">
+              <details ref={promptsRef} className="group mt-8 rounded-lg bg-card ring-1 ring-rule">
                 <summary className="flex cursor-pointer list-none items-center gap-3 px-5 py-4 text-sm">
                   <Lightbulb aria-hidden className="size-5 text-accent" />
                   <span className="flex-1">Need a prompt?</span>
@@ -237,7 +228,11 @@ export function ShareFlow() {
                         <button
                           type="button"
                           aria-pressed={selected}
-                          onClick={() => setPromptId(selected ? null : p.id)}
+                          onClick={() => {
+                            setPromptId(selected ? null : p.id);
+                            // Close the list once a prompt is chosen; it shows above the text box.
+                            if (!selected && promptsRef.current) promptsRef.current.open = false;
+                          }}
                           className={`w-full rounded px-3 py-2 text-left font-serif text-lg transition-colors ${
                             selected ? "bg-accent-soft text-ink" : "text-ink-soft hover:bg-paper"
                           }`}
@@ -280,16 +275,7 @@ export function ShareFlow() {
             <MediaPicker files={files} onChange={setFiles} />
           </div>
 
-          <div className="mt-8 grid gap-6 sm:grid-cols-2">
-            <Field label="Language of your testimony">
-              <select value={language} onChange={(e) => setLanguage(e.target.value)} className={inputClass}>
-                {LANGUAGES.map((l) => (
-                  <option key={l.code} value={l.code}>
-                    {l.label}
-                  </option>
-                ))}
-              </select>
-            </Field>
+          <div className="mt-8">
             <div>
               <label className="flex items-start gap-3 text-sm">
                 <input
