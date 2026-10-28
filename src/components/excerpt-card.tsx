@@ -1,9 +1,11 @@
+import { Quote } from "lucide-react";
 import type { Excerpt } from "@/lib/amplify";
+import { ThemeIcon } from "./icons";
 
 export function formatMonth(date: string | null | undefined) {
   if (!date) return "";
   return new Date(`${date.slice(0, 7)}-15T00:00:00Z`).toLocaleDateString("en-US", {
-    month: "long",
+    month: "short",
     year: "numeric",
     timeZone: "UTC",
   });
@@ -11,29 +13,27 @@ export function formatMonth(date: string | null | undefined) {
 
 export function ExcerptCard({ excerpt, size = "md" }: { excerpt: Excerpt; size?: "md" | "lg" }) {
   return (
-    <article className="flex h-full flex-col border-t border-ink pt-5">
-      <blockquote
-        className={`font-serif leading-snug text-ink ${size === "lg" ? "text-2xl sm:text-[1.7rem]" : "text-xl"}`}
-      >
-        <span aria-hidden className="mr-1 text-accent">“</span>
+    <article className="flex h-full flex-col rounded-lg bg-card p-7 shadow-sm ring-1 ring-rule transition-shadow hover:shadow-md">
+      <Quote aria-hidden className="size-7 text-accent" strokeWidth={1.5} />
+      <blockquote className={`mt-4 font-serif leading-snug ${size === "lg" ? "text-2xl sm:text-3xl" : "text-xl"}`}>
         {excerpt.text}
-        <span aria-hidden className="ml-0.5 text-accent">”</span>
       </blockquote>
-      <footer className="mt-auto pt-6 text-sm text-muted">
-        <p>
-          {excerpt.participantCategory}
-          {excerpt.contributedOn ? ` · ${formatMonth(excerpt.contributedOn)}` : ""}
-        </p>
+      <footer className="mt-auto pt-6">
         {excerpt.themes?.length ? (
-          <ul className="mt-3 flex flex-wrap gap-2">
+          <ul className="mb-4 flex flex-wrap gap-1.5">
             {excerpt.themes.filter(Boolean).map((t) => (
-              <li key={t} className="rounded-full border border-rule px-2.5 py-0.5 text-xs text-ink-soft">
+              <li key={t} className="inline-flex items-center gap-1 rounded-full bg-paper px-2.5 py-1 text-xs text-ink-soft">
+                <ThemeIcon theme={t!} className="size-3.5" />
                 {t}
               </li>
             ))}
           </ul>
         ) : null}
-        {excerpt.synthetic ? <p className="mt-3 text-xs italic">Fictional sample entry</p> : null}
+        <p className="border-t border-rule pt-3 text-xs text-muted">
+          {excerpt.participantCategory}
+          {excerpt.contributedOn ? ` · ${formatMonth(excerpt.contributedOn)}` : ""}
+          {excerpt.synthetic ? " · Fictional sample" : ""}
+        </p>
       </footer>
     </article>
   );

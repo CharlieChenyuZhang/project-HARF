@@ -94,7 +94,12 @@ export function TestimonyReview() {
             <li key={t.id}>
               <button
                 type="button"
-                onClick={() => setSelectedId(t.id)}
+                onClick={() => {
+                  setSelectedId(t.id);
+                  // On phones the detail panel sits below the list.
+                  if (window.matchMedia("(max-width: 1023px)").matches)
+                    requestAnimationFrame(() => document.getElementById("testimony-detail")?.scrollIntoView({ behavior: "smooth" }));
+                }}
                 className={`block w-full px-3 py-3 text-left transition-colors ${t.id === selectedId ? "bg-card" : "hover:bg-paper-deep/60"}`}
               >
                 <span className="flex items-center justify-between gap-2 text-xs text-muted">
@@ -117,7 +122,7 @@ export function TestimonyReview() {
         </button>
       </aside>
 
-      <section>
+      <section id="testimony-detail" className="scroll-mt-24">
         {selected ? (
           <TestimonyDetail
             key={selected.id}

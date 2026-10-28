@@ -1,18 +1,20 @@
 @import "tailwindcss";
 
-/* HARF: a contemporary cultural institution, not a tech startup.
-   Paper, ink, a single oxblood accent, and generous typography. */
+/* HARF: an academic institution's calm — light gray canvas, white cards,
+   deep navy bands, a single crimson accent, light serif headlines. */
 :root {
   color-scheme: light;
-  --paper: #f4efe6;
-  --paper-deep: #ebe4d7;
-  --card: #fbf8f2;
-  --ink: #1a1714;
-  --ink-soft: #3b3530;
-  --muted: #6e665d;
-  --rule: #d8cfbf;
-  --accent: #8a2c1d;
-  --accent-soft: #f0dcd4;
+  --paper: #f3f4f4;
+  --paper-deep: #e3e5e5;
+  --card: #ffffff;
+  --ink: #1e1e1e;
+  --ink-soft: #3d4046;
+  --muted: #6b6f76;
+  --rule: #dcdfe0;
+  --accent: #a51c30;
+  --accent-soft: #f7e4e7;
+  --navy: #1b2136;
+  --navy-soft: #2a3150;
   --ok: #2f5d3a;
 }
 
@@ -27,6 +29,8 @@
   --color-accent: var(--accent);
   --color-accent-soft: var(--accent-soft);
   --color-ok: var(--ok);
+  --color-navy: var(--navy);
+  --color-navy-soft: var(--navy-soft);
   --font-serif: var(--font-newsreader), Georgia, "Times New Roman", serif;
   --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
 }
@@ -58,6 +62,13 @@ body {
   letter-spacing: 0.18em;
   text-transform: uppercase;
   color: var(--muted);
+}
+
+h1,
+h2,
+h3 {
+  font-weight: 400;
+  letter-spacing: -0.01em;
 }
 
 .prose-harf p + p {

@@ -1,8 +1,10 @@
 "use client";
 
+import { CheckCircle2, ChevronDown, Database, Eye, Lightbulb, Mail, PenLine, ShieldCheck, UserRound, type LucideIcon } from "lucide-react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useId, useState, type ReactNode } from "react";
+import { CircleLink } from "@/components/circle-link";
 import { client, errorMessage, type WeeklyQuestion } from "@/lib/amplify";
 import {
   AI_USE_FREQUENCIES,
@@ -39,10 +41,10 @@ function writeStorage(key: string, value: string | null, storage: () => Storage 
 const session = () => window.sessionStorage;
 
 type Step = "write" | "context" | "consent" | "done";
-const STEPS: { id: Step; label: string }[] = [
-  { id: "write", label: "Your experience" },
-  { id: "context", label: "Context" },
-  { id: "consent", label: "Your choices" },
+const STEPS: { id: Step; label: string; icon: LucideIcon }[] = [
+  { id: "write", label: "Your story", icon: PenLine },
+  { id: "context", label: "Context", icon: UserRound },
+  { id: "consent", label: "Your choices", icon: ShieldCheck },
 ];
 
 function browserLanguage() {
@@ -162,18 +164,28 @@ export function ShareFlow() {
 
   return (
     <div className="mx-auto max-w-3xl px-5 pb-10 pt-12 sm:pt-16">
-      <ol className="mb-12 flex gap-2 text-xs uppercase tracking-[0.14em]" aria-label="Progress">
-        {STEPS.map((s, i) => (
-          <li
-            key={s.id}
-            aria-current={i === stepIndex ? "step" : undefined}
-            className={`flex-1 border-t-2 pt-2 ${i <= stepIndex ? "border-ink text-ink" : "border-rule text-muted"}`}
-          >
-            <span className="hidden sm:inline">{String(i + 1).padStart(2, "0")} · </span>
-            {s.label}
-          </li>
-        ))}
+      <ol className="mb-12 flex items-center gap-2 text-sm" aria-label="Progress">
+        {STEPS.map((s, i) => {
+          const Icon = s.icon;
+          const reached = i <= stepIndex;
+          return (
+            <li key={s.id} aria-current={i === stepIndex ? "step" : undefined} className="flex flex-1 items-center gap-2">
+              <span
+                className={`flex size-9 shrink-0 items-center justify-center rounded-full ${
+                  reached ? "bg-accent text-card" : "bg-card text-muted ring-1 ring-rule"
+                }`}
+              >
+                <Icon aria-hidden className="size-4" />
+              </span>
+              <span className={`hidden sm:inline ${reached ? "text-ink" : "text-muted"}`}>{s.label}</span>
+              {i < STEPS.length - 1 ? <span aria-hidden className={`h-px flex-1 ${i < stepIndex ? "bg-accent" : "bg-rule"}`} /> : null}
+            </li>
+          );
+        })}
       </ol>
+      <p className="-mt-8 mb-8 text-sm text-muted sm:hidden">
+        Step {stepIndex + 1} of {STEPS.length} · {STEPS[stepIndex].label}
+      </p>
 
       {step === "write" && (
         <section>
@@ -190,16 +202,14 @@ export function ShareFlow() {
             <>
               <p className="eyebrow">Share your experience</p>
               <h1 className="mt-4 font-serif text-3xl leading-tight sm:text-5xl">{MAIN_PROMPT}</h1>
-              <p className="mt-5 text-ink-soft">
-                Write freely, in any language, as much or as little as you like. There are no right answers — we are
-                interested in contradictions and uncertainty as much as in conclusions.
-              </p>
-              <details className="group mt-8 border-y border-rule">
-                <summary className="flex cursor-pointer list-none items-center justify-between py-4 text-sm">
-                  <span>Not sure where to begin? Choose a prompt (optional)</span>
-                  <span aria-hidden className="text-lg transition-transform group-open:rotate-45">+</span>
+              <p className="mt-4 text-muted">Any language, any length. No right answers.</p>
+              <details className="group mt-8 rounded-lg bg-card ring-1 ring-rule">
+                <summary className="flex cursor-pointer list-none items-center gap-3 px-5 py-4 text-sm">
+                  <Lightbulb aria-hidden className="size-5 text-accent" />
+                  <span className="flex-1">Need a prompt?</span>
+                  <ChevronDown aria-hidden className="size-4 transition-transform group-open:rotate-180" />
                 </summary>
-                <ul className="space-y-1 pb-5">
+                <ul className="space-y-1 px-3 pb-4">
                   {OPTIONAL_PROMPTS.map((p) => {
                     const selected = promptId === p.id;
                     return (
@@ -209,7 +219,7 @@ export function ShareFlow() {
                           aria-pressed={selected}
                           onClick={() => setPromptId(selected ? null : p.id)}
                           className={`w-full rounded px-3 py-2 text-left font-serif text-lg transition-colors ${
-                            selected ? "bg-accent-soft text-ink" : "text-ink-soft hover:bg-paper-deep"
+                            selected ? "bg-accent-soft text-ink" : "text-ink-soft hover:bg-paper"
                           }`}
                         >
                           {p.text}
@@ -231,10 +241,10 @@ export function ShareFlow() {
             <textarea
               value={text}
               onChange={(e) => setText(e.target.value)}
-              rows={12}
+              rows={8}
               maxLength={LIMITS.testimonyMax}
               placeholder="Start writing…"
-              className="w-full resize-y rounded-sm border border-rule bg-card px-5 py-4 font-serif text-lg leading-relaxed placeholder:text-muted/70 focus:border-ink focus:outline-none focus-visible:outline-none"
+              className="w-full resize-y rounded-lg border border-rule bg-card sm:min-h-80 px-5 py-4 font-serif text-lg leading-relaxed placeholder:text-muted/70 focus:border-ink focus:outline-none focus-visible:outline-none"
             />
           </label>
           <div className="mt-2 flex justify-between text-xs text-muted">
@@ -262,11 +272,11 @@ export function ShareFlow() {
                   type="checkbox"
                   checked={returning}
                   onChange={(e) => setReturning(e.target.checked)}
-                  className="mt-0.5 size-4 accent-ink"
+                  className="mt-0.5 size-5 shrink-0 accent-accent"
                 />
                 <span>
-                  I&apos;ve shared before and have a participant code
-                  <span className="block text-muted">So we can see how your experience changes over time.</span>
+                  I have a participant code
+                  <span className="block text-muted">Links this to your earlier stories.</span>
                 </span>
               </label>
               {returning ? (
@@ -295,11 +305,8 @@ export function ShareFlow() {
 
       {step === "context" && (
         <section>
-          <p className="eyebrow">Optional</p>
-          <h1 className="mt-4 font-serif text-3xl leading-tight sm:text-4xl">A little context, if you&apos;d like</h1>
-          <p className="mt-4 text-ink-soft">
-            Every field is optional. We never ask for your name or institution here.
-          </p>
+          <h1 className="font-serif text-3xl leading-tight sm:text-4xl">A little context</h1>
+          <p className="mt-3 text-muted">All optional. No names.</p>
 
           <fieldset className="mt-10">
             <legend className="mb-3 text-sm font-medium">Your relationship with AI</legend>
@@ -342,8 +349,7 @@ export function ShareFlow() {
           </div>
 
           <fieldset className="mt-10">
-            <legend className="mb-1 text-sm font-medium">How do you feel about AI right now?</legend>
-            <p className="mb-3 text-sm text-muted">Choose as many as apply. Mixed feelings are welcome.</p>
+            <legend className="mb-3 text-sm font-medium">How do you feel about AI? (choose any)</legend>
             <div className="flex flex-wrap gap-2">
               {FEELINGS.map((f) => {
                 const selected = feelings.includes(f);
@@ -383,14 +389,12 @@ export function ShareFlow() {
 
       {step === "consent" && (
         <section>
-          <p className="eyebrow">Your choices</p>
-          <h1 className="mt-4 font-serif text-3xl leading-tight sm:text-4xl">How may we use your contribution?</h1>
-          <p className="mt-4 text-ink-soft">
-            Three separate choices. Only the first is needed to submit. Read the{" "}
+          <h1 className="font-serif text-3xl leading-tight sm:text-4xl">How may we use it?</h1>
+          <p className="mt-3 text-muted">
+            Only the first is required.{" "}
             <Link href="/privacy/" target="_blank" className="underline hover:text-accent">
-              privacy notice
-            </Link>{" "}
-            for how your information is stored, protected and removed.
+              Privacy notice
+            </Link>
           </p>
 
           <div className="mt-10 space-y-4">
@@ -398,18 +402,19 @@ export function ShareFlow() {
               checked={consentResearch}
               onChange={setConsentResearch}
               title="Store and analyze my contribution"
+              icon={Database}
               required
             >
               {CONSENT_TEXT.research}
             </Consent>
-            <Consent checked={consentPublish} onChange={setConsentPublish} title="Publish an anonymized excerpt">
+            <Consent checked={consentPublish} onChange={setConsentPublish} title="Publish an anonymized excerpt" icon={Eye}>
               {CONSENT_TEXT.publish}
             </Consent>
-            <Consent checked={consentContact} onChange={setConsentContact} title="Contact me for a follow-up">
+            <Consent checked={consentContact} onChange={setConsentContact} title="Contact me for a follow-up" icon={Mail}>
               {CONSENT_TEXT.contact}
             </Consent>
             {consentContact ? (
-              <div className="grid gap-4 rounded-sm border border-rule bg-card p-5 sm:grid-cols-2">
+              <div className="grid gap-4 rounded-lg bg-card p-5 ring-1 ring-rule sm:grid-cols-2">
                 <Field label="Email">
                   <input
                     type="email"
@@ -471,21 +476,19 @@ function Done({ result }: { result: { participantCode: string; entryNumber: numb
 
   return (
     <div className="mx-auto max-w-3xl px-5 pb-10 pt-16 sm:pt-24">
-      <p className="eyebrow">Received</p>
-      <h1 className="mt-4 font-serif text-4xl leading-tight sm:text-5xl">Thank you. Your testimony is now part of the record.</h1>
-      <p className="mt-6 leading-relaxed text-ink-soft">
+      <CheckCircle2 aria-hidden className="size-12 text-accent" strokeWidth={1.5} />
+      <h1 className="mt-6 font-serif text-4xl leading-tight sm:text-5xl">Thank you. It&apos;s part of the record now.</h1>
+      <p className="mt-4 text-muted">
         {result.entryNumber > 1
-          ? `This is your ${ordinal(result.entryNumber)} contribution. Seeing how experiences change is what turns a collection of stories into a Living Memory.`
-          : "Nothing is published automatically. If you allowed it, an editor may select an anonymized excerpt for the archive."}
+          ? `Your ${ordinal(result.entryNumber)} contribution — linked to your earlier ones.`
+          : "Nothing is published automatically."}
       </p>
 
-      <div className="mt-10 border border-ink bg-card p-6 sm:p-8">
+      <div className="mt-10 rounded-lg bg-card p-6 shadow-sm ring-1 ring-rule sm:p-8">
         <p className="eyebrow">Your private participant code</p>
         <p className="mt-3 select-all break-all font-mono text-2xl tracking-wider sm:text-3xl">{result.participantCode}</p>
         <p className="mt-4 text-sm text-ink-soft">
-          Keep this code if you&apos;d like to return in a few months and tell us how things have changed. It links your
-          contributions without identifying you. We only store a one-way fingerprint of it, so we can&apos;t recover it
-          for you.
+          Come back in a few months with this code to tell us what changed. We can&apos;t recover it for you.
         </p>
         <div className="mt-6 flex flex-wrap gap-3">
           <button
@@ -512,12 +515,8 @@ function Done({ result }: { result: { participantCode: string; entryNumber: numb
       </div>
 
       <div className="mt-12 flex flex-wrap gap-6 text-sm">
-        <Link href="/archive/" className="border-b border-ink pb-0.5 hover:text-accent">
-          Explore the archive →
-        </Link>
-        <Link href="/survey/" className="border-b border-ink pb-0.5 hover:text-accent">
-          Take the survey too →
-        </Link>
+        <CircleLink href="/archive/">Explore the archive</CircleLink>
+        <CircleLink href="/survey/">Take the survey too</CircleLink>
       </div>
     </div>
   );
@@ -530,11 +529,11 @@ function ordinal(n: number) {
 }
 
 const inputClass =
-  "w-full rounded-sm border border-rule bg-card px-3 py-2.5 text-base focus:border-ink focus:outline-none";
+  "w-full rounded-md border border-rule bg-card px-3 py-2.5 text-base focus:border-ink focus:outline-none";
 const primaryButton =
-  "rounded-full bg-ink px-7 py-3 text-sm uppercase tracking-[0.14em] text-paper transition-colors hover:bg-accent disabled:cursor-not-allowed disabled:bg-ink/30";
+  "rounded-full bg-accent px-7 py-3 text-sm font-medium text-card transition-colors hover:bg-ink disabled:cursor-not-allowed disabled:bg-ink/25";
 const secondaryButton =
-  "rounded-full border border-ink px-6 py-2.5 text-sm uppercase tracking-[0.12em] transition-colors hover:bg-ink hover:text-paper disabled:opacity-50 disabled:hover:bg-transparent disabled:hover:text-ink";
+  "rounded-full px-6 py-2.5 text-sm font-medium ring-1 ring-ink transition-colors hover:bg-ink hover:text-card disabled:opacity-50 disabled:hover:bg-transparent disabled:hover:text-ink";
 
 function Field({ label, children }: { label: string; children: ReactNode }) {
   return (
@@ -552,7 +551,7 @@ function Chip({ selected, onClick, children }: { selected: boolean; onClick: () 
       aria-pressed={selected}
       onClick={onClick}
       className={`rounded-full border px-4 py-1.5 text-sm transition-colors ${
-        selected ? "border-ink bg-ink text-paper" : "border-rule bg-card hover:border-ink"
+        selected ? "border-navy bg-navy text-card" : "border-rule bg-card hover:border-ink"
       }`}
     >
       {children}
@@ -564,12 +563,14 @@ function Consent({
   checked,
   onChange,
   title,
+  icon: Icon,
   required,
   children,
 }: {
   checked: boolean;
   onChange: (v: boolean) => void;
   title: string;
+  icon: LucideIcon;
   required?: boolean;
   children: ReactNode;
 }) {
@@ -577,18 +578,25 @@ function Consent({
   return (
     <label
       htmlFor={id}
-      className={`flex cursor-pointer gap-4 rounded-sm border p-5 transition-colors ${
-        checked ? "border-ink bg-card" : "border-rule hover:border-ink/50"
+      className={`flex cursor-pointer gap-4 rounded-lg bg-card p-5 ring-1 transition-shadow ${
+        checked ? "shadow-sm ring-accent" : "ring-rule hover:ring-ink/40"
       }`}
     >
-      <input id={id} type="checkbox" checked={checked} onChange={(e) => onChange(e.target.checked)} className="mt-1 size-4 shrink-0 accent-ink" />
-      <span>
+      <span
+        className={`hidden size-10 shrink-0 items-center justify-center rounded-full sm:flex ${
+          checked ? "bg-accent text-card" : "bg-accent-soft text-accent"
+        }`}
+      >
+        <Icon aria-hidden className="size-5" />
+      </span>
+      <span className="flex-1">
         <span className="block font-medium">
           {title}
           <span className="ml-2 text-xs uppercase tracking-[0.12em] text-muted">{required ? "Required" : "Optional"}</span>
         </span>
-        <span className="mt-1 block text-sm leading-relaxed text-ink-soft">{children}</span>
+        <span className="mt-1 block text-sm leading-relaxed text-muted">{children}</span>
       </span>
+      <input id={id} type="checkbox" checked={checked} onChange={(e) => onChange(e.target.checked)} className="mt-1 size-5 shrink-0 accent-accent" />
     </label>
   );
 }

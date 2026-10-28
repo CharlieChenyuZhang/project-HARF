@@ -1,8 +1,9 @@
 "use client";
 
-import Link from "next/link";
+import { MessageCircleQuestionMark } from "lucide-react";
 import { useEffect, useState } from "react";
 import { client, fetchCurrentWeeklyQuestion, listAll, type Excerpt, type WeeklyQuestion } from "@/lib/amplify";
+import { CircleLink } from "./circle-link";
 import { ExcerptCard } from "./excerpt-card";
 
 export function WeeklyQuestionCard() {
@@ -17,37 +18,20 @@ export function WeeklyQuestionCard() {
   if (question === null) return null;
 
   return (
-    <section className="bg-ink text-paper">
-      <div className="mx-auto grid max-w-6xl gap-8 px-5 py-16 sm:py-20 md:grid-cols-[1fr_2fr] md:gap-16">
+    <section className="mx-auto max-w-6xl px-5">
+      <div className="grid items-center gap-8 rounded-lg bg-card p-8 shadow-sm ring-1 ring-rule sm:p-12 md:grid-cols-[auto_1fr_auto]">
+        <span className="flex size-16 items-center justify-center rounded-full bg-accent-soft text-accent">
+          <MessageCircleQuestionMark aria-hidden className="size-8" strokeWidth={1.5} />
+        </span>
         <div>
-          <p className="text-[0.72rem] uppercase tracking-[0.18em] text-paper/60">The Question of the Week</p>
-          {question?.weekOf ? (
-            <p className="mt-2 text-sm text-paper/60">
-              Week of{" "}
-              {new Date(`${question.weekOf}T12:00:00Z`).toLocaleDateString("en-US", {
-                month: "long",
-                day: "numeric",
-                year: "numeric",
-              })}
-            </p>
-          ) : null}
-        </div>
-        <div className="min-h-40">
+          <p className="eyebrow">Question of the week</p>
           {question === undefined ? (
-            <div className="h-24 animate-pulse rounded bg-paper/10" />
+            <div className="mt-3 h-10 max-w-xl animate-pulse rounded bg-paper-deep" />
           ) : (
-            <>
-              <h2 className="font-serif text-3xl leading-tight sm:text-4xl">{question.question}</h2>
-              {question.introduction ? <p className="mt-4 max-w-xl text-paper/70">{question.introduction}</p> : null}
-              <Link
-                href={`/share/?weekly=${question.id}`}
-                className="mt-8 inline-flex items-center gap-2 border-b border-paper/60 pb-1 text-sm uppercase tracking-[0.14em] hover:border-paper"
-              >
-                Respond to this question <span aria-hidden>→</span>
-              </Link>
-            </>
+            <h2 className="mt-2 font-serif text-2xl leading-snug sm:text-3xl">{question.question}</h2>
           )}
         </div>
+        {question ? <CircleLink href={`/share/?weekly=${question.id}`}>Respond</CircleLink> : null}
       </div>
     </section>
   );
@@ -66,16 +50,16 @@ export function ArchivePreview() {
   if (failed) return <p className="text-muted">The archive is unavailable right now.</p>;
   if (!excerpts)
     return (
-      <div className="grid gap-10 md:grid-cols-3">
+      <div className="grid gap-6 md:grid-cols-3">
         {[0, 1, 2].map((i) => (
-          <div key={i} className="h-56 animate-pulse border-t border-rule bg-paper-deep/40" />
+          <div key={i} className="h-64 animate-pulse rounded-lg bg-card" />
         ))}
       </div>
     );
-  if (!excerpts.length) return <p className="text-muted">The first testimonies are being reviewed.</p>;
+  if (!excerpts.length) return <p className="text-muted">The first stories are being reviewed.</p>;
 
   return (
-    <div className="grid gap-12 md:grid-cols-3 md:gap-10">
+    <div className="grid gap-6 md:grid-cols-3">
       {excerpts.map((e) => (
         <ExcerptCard key={e.id} excerpt={e} />
       ))}

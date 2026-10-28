@@ -1,165 +1,114 @@
+import { ArrowRight, ArrowUpRight, ClipboardList, Library, PenLine, type LucideIcon } from "lucide-react";
 import Link from "next/link";
+import { CircleLink } from "@/components/circle-link";
+import { HERO_PHOTO_CREDIT, HeroPhoto } from "@/components/hero-photo";
 import { ArchivePreview, WeeklyQuestionCard } from "@/components/home-islands";
+import { ThemeIcon } from "@/components/icons";
 import { SURVEY_URL } from "@/components/site-chrome";
 import { THEMES } from "@/lib/harf";
 
-const CONTRADICTIONS = [
-  "More productive, yet less intellectually confident.",
-  "Discovering new creative possibilities while growing more dependent.",
-  "Using AI constantly while feeling uncomfortable admitting it.",
-  "Learning differently without knowing whether it is more, or less.",
+const ACTIONS: { href: string; icon: LucideIcon; title: string; text: string; external?: boolean }[] = [
+  { href: "/share/", icon: PenLine, title: "Share your experience", text: "In your own words." },
+  { href: SURVEY_URL, icon: ClipboardList, title: "Take the survey", text: "Structured questions.", external: true },
+  { href: "/archive/", icon: Library, title: "Explore the archive", text: "Stories shared with consent." },
 ];
 
 export default function Home() {
   return (
     <>
       {/* Hero */}
-      <section className="mx-auto max-w-6xl px-5 pb-20 pt-16 sm:pt-24">
-        <p className="eyebrow">A Living Memory of the AI transition</p>
-        <h1 className="mt-6 max-w-4xl font-serif text-[2.6rem] leading-[1.05] tracking-tight sm:text-6xl md:text-7xl">
-          We are living through a transformation we do not yet fully understand.
-        </h1>
-        <div className="mt-10 grid gap-10 md:grid-cols-[3fr_2fr] md:gap-16">
-          <div>
-            <p className="font-serif text-2xl italic leading-snug text-ink-soft sm:text-3xl">
-              How is AI changing the way you think, learn, work, and feel?
-            </p>
-            <p className="mt-6 max-w-xl leading-relaxed text-ink-soft">
-              HARF is an independent initiative documenting the human experience of artificial intelligence. Through
-              personal testimonies, research, and recurring observations, we are building a living record of how people
-              adapt to one of the most consequential technological transformations in history.
-            </p>
+      <section className="relative overflow-hidden bg-navy text-card">
+        <HeroPhoto />
+        <div className="relative mx-auto max-w-6xl px-5 pb-32 pt-16 sm:pb-40 sm:pt-28">
+          <p className="text-xs uppercase tracking-[0.2em] text-card/60">A Living Memory of the AI transition</p>
+          <h1 className="mt-6 max-w-3xl font-serif text-[2.6rem] leading-[1.05] sm:text-6xl">
+            We are living through a transformation we do not yet fully understand.
+          </h1>
+          <p className="mt-6 max-w-xl text-lg text-card/80">How is AI changing the way you think, learn, work, and feel?</p>
+          <div className="mt-10">
+            <CircleLink href="/share/" tone="light">
+              Share your story
+            </CircleLink>
           </div>
-          <nav aria-label="Participate" className="flex flex-col self-end border-t border-ink">
-            <Link
-              href="/share/"
-              className="group flex items-center justify-between border-b border-rule py-5 transition-colors hover:text-accent"
-            >
-              <span>
-                <span className="block text-sm uppercase tracking-[0.16em]">Share your experience</span>
-                <span className="mt-1 block text-sm text-muted">Tell us something in your own words</span>
-              </span>
-              <span aria-hidden className="text-2xl transition-transform group-hover:translate-x-1">→</span>
-            </Link>
-            <a
-              href={SURVEY_URL}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="group flex items-center justify-between border-b border-rule py-5 transition-colors hover:text-accent"
-            >
-              <span>
-                <span className="block text-sm uppercase tracking-[0.16em]">Take the survey</span>
-                <span className="mt-1 block text-sm text-muted">A structured questionnaire for the research</span>
-              </span>
-              <span aria-hidden className="text-2xl transition-transform group-hover:translate-x-1">↗</span>
-            </a>
-            <Link
-              href="/archive/"
-              className="group flex items-center justify-between border-b border-rule py-5 transition-colors hover:text-accent"
-            >
-              <span>
-                <span className="block text-sm uppercase tracking-[0.16em]">Explore the archive</span>
-                <span className="mt-1 block text-sm text-muted">Selected testimonies, shared with consent</span>
-              </span>
-              <span aria-hidden className="text-2xl transition-transform group-hover:translate-x-1">→</span>
-            </Link>
-          </nav>
+        </div>
+        <a
+          href={HERO_PHOTO_CREDIT.url}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="absolute bottom-24 right-5 hidden text-[0.65rem] text-card/50 hover:text-card sm:block"
+        >
+          Photo: {HERO_PHOTO_CREDIT.name} / Unsplash
+        </a>
+      </section>
+
+      {/* Three actions */}
+      <section className="relative mx-auto -mt-20 max-w-6xl px-5">
+        <div className="grid gap-4 md:grid-cols-3">
+          {ACTIONS.map(({ href, icon: Icon, title, text, external }) => {
+            const body = (
+              <>
+                <span className="flex size-12 items-center justify-center rounded-full bg-accent-soft text-accent">
+                  <Icon aria-hidden className="size-6" strokeWidth={1.6} />
+                </span>
+                <span className="mt-6 block font-serif text-2xl">{title}</span>
+                <span className="mt-1 block text-sm text-muted">{text}</span>
+                {external ? (
+                  <ArrowUpRight aria-hidden className="absolute right-6 top-6 size-5 text-muted transition-colors group-hover:text-accent" />
+                ) : (
+                  <ArrowRight aria-hidden className="absolute right-6 top-6 size-5 text-muted transition-all group-hover:translate-x-0.5 group-hover:text-accent" />
+                )}
+              </>
+            );
+            const className =
+              "group relative block rounded-lg bg-card p-7 shadow-sm ring-1 ring-rule transition-shadow hover:shadow-md";
+            return external ? (
+              <a key={title} href={href} target="_blank" rel="noopener noreferrer" className={className}>
+                {body}
+              </a>
+            ) : (
+              <Link key={title} href={href} className={className}>
+                {body}
+              </Link>
+            );
+          })}
         </div>
       </section>
 
       {/* Principle */}
-      <section className="border-y border-rule bg-card">
-        <div className="mx-auto max-w-6xl px-5 py-20 sm:py-28">
-          <p className="eyebrow">Why now</p>
-          <blockquote className="mt-6 max-w-4xl font-serif text-3xl leading-tight sm:text-5xl">
-            What people believed before they knew what happened cannot be reconstructed later.
-          </blockquote>
-          <p className="mt-8 max-w-2xl leading-relaxed text-ink-soft">
-            We can interview people about the AI revolution ten years from now. But we will never be able to recreate
-            exactly what they thought, feared, expected, or misunderstood in 2026. HARF preserves those perceptions
-            while the transformation is still unfolding — including the uncertainty, the contradictions, and the
-            interpretations that will later be abandoned.
-          </p>
-        </div>
+      <section className="mx-auto max-w-4xl px-5 py-24 text-center sm:py-32">
+        <blockquote className="font-serif text-3xl leading-tight sm:text-5xl">
+          “What people believed before they knew what happened cannot be reconstructed later.”
+        </blockquote>
+        <p className="mt-6 text-sm uppercase tracking-[0.18em] text-muted">Why we start now</p>
       </section>
 
       <WeeklyQuestionCard />
 
-      {/* Where we start */}
-      <section className="mx-auto max-w-6xl px-5 py-20 sm:py-28">
-        <div className="grid gap-12 md:grid-cols-[1fr_2fr] md:gap-16">
-          <div>
-            <p className="eyebrow">Where we start</p>
-            <h2 className="mt-4 font-serif text-3xl leading-tight sm:text-4xl">Students and the academic community</h2>
-            <p className="mt-6 leading-relaxed text-ink-soft">
-              We begin with students, educators and researchers in Boston, where some of the most revealing
-              contradictions of this transition are already visible. HARF does not assume AI is making people better or
-              worse. Our task is to document what is happening.
-            </p>
-          </div>
-          <ol className="grid gap-x-10 gap-y-8 sm:grid-cols-2">
-            {CONTRADICTIONS.map((c, i) => (
-              <li key={c} className="border-t border-rule pt-4">
-                <span className="font-serif text-sm text-accent">{String(i + 1).padStart(2, "0")}</span>
-                <p className="mt-2 font-serif text-xl leading-snug">{c}</p>
-              </li>
-            ))}
-          </ol>
-        </div>
-      </section>
-
-      {/* Two channels */}
-      <section className="border-y border-rule bg-paper-deep/50">
-        <div className="mx-auto grid max-w-6xl gap-12 px-5 py-20 md:grid-cols-2 md:gap-16">
-          <div>
-            <p className="eyebrow">Open testimonies</p>
-            <p className="mt-4 font-serif text-2xl leading-snug">
-              The Living Memory captures what people spontaneously want to tell us.
-            </p>
-            <p className="mt-4 text-ink-soft">
-              Personal narratives, in your own words. Some of the most valuable insights come from experiences we
-              haven&apos;t thought to ask about.
-            </p>
-            <Link href="/share/" className="mt-6 inline-block border-b border-ink pb-0.5 text-sm hover:text-accent">
-              Share your experience →
-            </Link>
-          </div>
-          <div>
-            <p className="eyebrow">Structured research</p>
-            <p className="mt-4 font-serif text-2xl leading-snug">The survey captures what we know to ask.</p>
-            <p className="mt-4 text-ink-soft">
-              A questionnaire within the Boston academic community exploring AI&apos;s effects on thinking, learning and
-              intellectual autonomy, so we can identify patterns and compare responses.
-            </p>
-            <Link href="/survey/" className="mt-6 inline-block border-b border-ink pb-0.5 text-sm hover:text-accent">
-              Take the survey →
-            </Link>
-          </div>
-        </div>
-      </section>
-
-      {/* From the archive */}
-      <section className="mx-auto max-w-6xl px-5 py-20 sm:py-28">
-        <div className="mb-12 flex flex-wrap items-end justify-between gap-6">
-          <div>
-            <p className="eyebrow">From the archive</p>
-            <h2 className="mt-4 font-serif text-3xl sm:text-4xl">Selected testimonies</h2>
-          </div>
-          <Link href="/archive/" className="border-b border-ink pb-0.5 text-sm hover:text-accent">
-            Explore the archive →
-          </Link>
-        </div>
-        <ArchivePreview />
-        <ul className="mt-16 flex flex-wrap gap-x-3 gap-y-2 font-serif text-lg text-muted">
-          {THEMES.map((t, i) => (
+      {/* Themes */}
+      <section className="mx-auto max-w-6xl px-5 pt-24">
+        <h2 className="font-serif text-3xl sm:text-4xl">Explore by theme</h2>
+        <ul className="mt-8 grid grid-cols-2 gap-3 sm:grid-cols-4">
+          {THEMES.map((t) => (
             <li key={t}>
-              <Link href={`/archive/?theme=${encodeURIComponent(t)}`} className="hover:text-accent">
-                {t}
+              <Link
+                href={`/archive/?theme=${encodeURIComponent(t)}`}
+                className="group flex items-center gap-3 rounded-lg bg-card px-4 py-4 ring-1 ring-rule transition-colors hover:bg-navy hover:text-card hover:ring-navy"
+              >
+                <ThemeIcon theme={t} className="size-5 shrink-0 text-accent group-hover:text-card" />
+                <span className="text-sm font-medium sm:text-base">{t}</span>
               </Link>
-              {i < THEMES.length - 1 ? <span aria-hidden className="ml-3">·</span> : null}
             </li>
           ))}
         </ul>
+      </section>
+
+      {/* From the archive */}
+      <section className="mx-auto max-w-6xl px-5 pt-24">
+        <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
+          <h2 className="font-serif text-3xl sm:text-4xl">From the archive</h2>
+          <CircleLink href="/archive/">See all stories</CircleLink>
+        </div>
+        <ArchivePreview />
       </section>
     </>
   );

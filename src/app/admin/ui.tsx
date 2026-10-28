@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 
 export const inputClass =
-  "w-full rounded-sm border border-rule bg-card px-3 py-2 text-sm focus:border-ink focus:outline-none";
+  "w-full rounded-sm border border-rule bg-card px-3 py-2 text-base focus:border-ink sm:text-sm focus:outline-none";
 export const primaryButton =
   "rounded-full bg-ink px-5 py-2 text-xs uppercase tracking-[0.14em] text-paper transition-colors hover:bg-accent disabled:cursor-not-allowed disabled:bg-ink/30";
 export const secondaryButton =
