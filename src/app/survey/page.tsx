@@ -25,7 +25,6 @@ export default function SurveyPage() {
           <iframe
             src="https://tally.so/embed/RWKrVl?alignLeft=1&hideTitle=0&transparentBackground=1&dynamicHeight=0"
             title="HARF survey"
-            loading="lazy"
             className="h-[760px] w-full"
           />
         </div>
