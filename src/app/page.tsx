@@ -20,11 +20,13 @@ export default function Home() {
       <section className="relative overflow-hidden bg-navy text-card">
         <HeroPhoto />
         <div className="relative mx-auto max-w-6xl px-5 pb-32 pt-16 sm:pb-40 sm:pt-28">
-          <p className="text-xs uppercase tracking-[0.2em] text-card/60">A Living Memory of the AI transition</p>
-          <h1 className="mt-6 max-w-3xl font-serif text-[2.6rem] leading-[1.05] sm:text-6xl">
-            We are living through a transformation we do not yet fully understand.
+          <h1 className="max-w-4xl font-serif text-5xl leading-[1.02] sm:text-7xl md:text-8xl">
+            A Living Memory of the AI transition
           </h1>
-          <p className="mt-6 max-w-xl text-lg text-card/80">How is AI changing the way you think, learn, work, and feel?</p>
+          <p className="mt-8 max-w-2xl font-serif text-2xl leading-snug text-card/90 sm:text-3xl">
+            We are living through a transformation we do not yet fully understand.
+          </p>
+          <p className="mt-5 max-w-xl text-lg text-card/70">How is AI changing the way you think, learn, work, and feel?</p>
           <div className="mt-10">
             <CircleLink href="/share/" tone="light">
               Share your story
