@@ -1,5 +1,5 @@
-import { Orbit } from "lucide-react";
 import Link from "next/link";
+import { Monogram } from "./logo";
 import { MobileMenu } from "./mobile-menu";
 
 export const SURVEY_URL = "https://tally.so/r/RWKrVl";
@@ -25,15 +25,18 @@ export function PreviewBanner() {
   );
 }
 
-export function Wordmark({ className = "" }: { className?: string }) {
+/** `accent` recolors the monogram's rule, e.g. a lighter crimson on navy. */
+export function Wordmark({ className = "", accent }: { className?: string; accent?: string }) {
   return (
-    <span className={`flex items-center gap-2.5 ${className}`}>
-      <Orbit aria-hidden className="size-7 text-accent" strokeWidth={1.5} />
-      <span className="leading-none">
-        <span className="block font-serif text-2xl tracking-[0.14em]">HARF</span>
-        <span className="mt-0.5 hidden text-[0.6rem] uppercase tracking-[0.2em] opacity-70 sm:block">
-          Human Agency, Reasoning &amp; Futures
-        </span>
+    <span
+      className={`flex items-center gap-3 ${className}`}
+      style={accent ? ({ "--accent": accent } as React.CSSProperties) : undefined}
+    >
+      <Monogram className="h-11 w-auto" />
+      <span className="hidden text-[0.62rem] uppercase leading-snug tracking-[0.2em] opacity-75 sm:block">
+        Human Agency,
+        <br />
+        Reasoning &amp; Futures
       </span>
     </span>
   );
@@ -70,7 +73,7 @@ export function SiteFooter() {
     <footer className="mt-24 bg-navy text-card">
       <div className="mx-auto grid max-w-6xl gap-10 px-5 py-14 sm:grid-cols-[2fr_1fr_1fr]">
         <div>
-          <Wordmark />
+          <Wordmark accent="#e8909d" />
           <p className="mt-6 max-w-sm font-serif text-xl leading-snug text-card/90">
             A story captures the event. Living Memory preserves the transformation.
           </p>

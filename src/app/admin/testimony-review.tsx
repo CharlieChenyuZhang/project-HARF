@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { client, errorMessage, listAll, type Contact, type Testimony } from "@/lib/amplify";
 import { EDITORIAL_STATUSES, LANGUAGES, THEMES, type EditorialStatus } from "@/lib/harf";
+import { MediaGallery } from "./media-gallery";
 import { Badge, Notice, STATUS_LABEL, inputClass, primaryButton, secondaryButton } from "./ui";
 
 const auth = { authMode: "userPool" } as const;
@@ -110,7 +111,14 @@ export function TestimonyReview() {
                 </span>
                 <span className="mt-1.5 line-clamp-2 block font-serif text-[0.95rem] leading-snug">{t.originalText}</span>
                 <span className="mt-1.5 block text-xs text-muted">
-                  {[t.relationship, t.fieldOfWork, t.synthetic ? "Synthetic" : null].filter(Boolean).join(" · ")}
+                  {[
+                    t.relationship,
+                    t.fieldOfWork,
+                    t.media?.length ? `${t.media.length} attachment${t.media.length > 1 ? "s" : ""}` : null,
+                    t.synthetic ? "Synthetic" : null,
+                  ]
+                    .filter(Boolean)
+                    .join(" · ")}
                 </span>
               </button>
             </li>
@@ -276,6 +284,13 @@ function TestimonyDetail({
         </div>
       </div>
 
+      {t.media?.length ? (
+        <div>
+          <p className="eyebrow mb-3">Attachments · {t.media.length}</p>
+          <MediaGallery media={t.media.filter((m): m is NonNullable<typeof m> => !!m)} />
+        </div>
+      ) : null}
+
       {history.length > 1 ? (
         <div>
           <p className="eyebrow mb-2">Same participant over time</p>
@@ -299,10 +314,19 @@ function TestimonyDetail({
       ) : null}
 
       <dl className="grid gap-x-8 gap-y-3 text-sm sm:grid-cols-3">
+        <Meta label="Age range" value={t.ageRange} />
+        <Meta label="Gender" value={t.gender === "Self-describe" ? t.genderSelfDescribed || "Self-described" : t.gender} />
+        <Meta label="Academic stage" value={t.academicStage} />
+        <Meta label="Country now" value={t.country} />
+        <Meta label="Country of birth" value={t.countryOfBirth} />
+        <Meta label="First language" value={t.firstLanguage} />
         <Meta label="Relationship" value={t.relationship} />
         <Meta label="Field" value={t.fieldOfWork} />
-        <Meta label="Country" value={t.country} />
+        <Meta label="Main AI tool" value={t.mainAiTool} />
+        <Meta label="Other AI tools" value={(t.otherAiTools ?? []).filter(Boolean).join(", ")} />
+        <Meta label="Using AI for" value={t.aiDuration} />
         <Meta label="AI use" value={t.aiUseFrequency} />
+        <Meta label="Main uses" value={(t.aiUses ?? []).filter(Boolean).join(", ")} />
         <Meta
           label="Feelings"
           value={[...(t.feelings ?? []).filter((f) => f !== "Other"), t.feelingsOther].filter(Boolean).join(", ")}

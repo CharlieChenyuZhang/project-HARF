@@ -2,10 +2,11 @@ import { defineBackend } from "@aws-amplify/backend";
 import { PolicyStatement } from "aws-cdk-lib/aws-iam";
 import { auth } from "./auth/resource";
 import { data } from "./data/resource";
+import { storage } from "./storage/resource";
 import { submitTestimony } from "./functions/submit-testimony/resource";
 import { editorial } from "./functions/editorial/resource";
 
-const backend = defineBackend({ auth, data, submitTestimony, editorial });
+const backend = defineBackend({ auth, data, storage, submitTestimony, editorial });
 
 const { tables, cfnResources } = backend.data.resources;
 
@@ -36,3 +37,27 @@ tables.Contact.grantWriteData(editorialFn);
 backend.editorial.addEnvironment("TESTIMONY_TABLE", tables.Testimony.tableName);
 backend.editorial.addEnvironment("EXCERPT_TABLE", tables.Excerpt.tableName);
 backend.editorial.addEnvironment("CONTACT_TABLE", tables.Contact.tableName);
+
+// Media: uploads/ is a short-lived drop zone; claimed files move to media/.
+const bucket = backend.storage.resources.bucket;
+backend.storage.resources.cfnResources.cfnBucket.lifecycleConfiguration = {
+  rules: [
+    {
+      id: "expire-unclaimed-uploads",
+      status: "Enabled",
+      prefix: "uploads/",
+      expirationInDays: 1,
+      noncurrentVersionExpiration: { noncurrentDays: 1 },
+    },
+    // Versioning gives media the same 35-day safety net as the tables' backups.
+    { id: "expire-old-versions", status: "Enabled", noncurrentVersionExpiration: { noncurrentDays: 35 } },
+  ],
+};
+backend.storage.resources.cfnResources.cfnBucket.versioningConfiguration = { status: "Enabled" };
+bucket.grantRead(submitFn, "uploads/*");
+bucket.grantDelete(submitFn, "uploads/*");
+bucket.grantPut(submitFn, "media/*");
+bucket.grantDelete(submitFn, "media/*");
+backend.submitTestimony.addEnvironment("MEDIA_BUCKET", bucket.bucketName);
+bucket.grantDelete(editorialFn, "media/*");
+backend.editorial.addEnvironment("MEDIA_BUCKET", bucket.bucketName);

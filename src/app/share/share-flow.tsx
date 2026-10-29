@@ -1,17 +1,37 @@
 "use client";
 
-import { CheckCircle2, ChevronDown, Database, Eye, Lightbulb, Mail, PenLine, ShieldCheck, UserRound, type LucideIcon } from "lucide-react";
+import {
+  CheckCircle2,
+  ChevronDown,
+  Database,
+  Eye,
+  Lightbulb,
+  Mail,
+  PenLine,
+  ShieldCheck,
+  Sparkles,
+  UserRound,
+  type LucideIcon,
+} from "lucide-react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { useEffect, useId, useState, type ReactNode } from "react";
+import { useEffect, useId, useMemo, useRef, useState, type ReactNode } from "react";
+import { MediaPicker } from "./media-picker";
 import { CircleLink } from "@/components/circle-link";
+import { uploadData } from "aws-amplify/storage";
 import { client, errorMessage, type WeeklyQuestion } from "@/lib/amplify";
+import { countryNames } from "@/lib/countries";
 import {
+  ACADEMIC_STAGES,
+  AGE_RANGES,
+  AI_DURATIONS,
+  AI_TOOLS,
+  AI_USES,
   AI_USE_FREQUENCIES,
+  GENDERS,
   CONSENT_TEXT,
   CONSENT_VERSION,
   FEELINGS,
-  LANGUAGES,
   LIMITS,
   MAIN_PROMPT,
   OPTIONAL_PROMPTS,
@@ -47,12 +67,6 @@ const STEPS: { id: Step; label: string; icon: LucideIcon }[] = [
   { id: "consent", label: "Your choices", icon: ShieldCheck },
 ];
 
-function browserLanguage() {
-  if (typeof navigator === "undefined") return "en";
-  const code = navigator.language?.slice(0, 2).toLowerCase();
-  return LANGUAGES.some((l) => l.code === code) ? code : "en";
-}
-
 export function ShareFlow() {
   const params = useSearchParams();
   const weeklyId = params.get("weekly");
@@ -63,7 +77,7 @@ export function ShareFlow() {
   // Step 1
   const [text, setText] = useState("");
   const [promptId, setPromptId] = useState<string | null>(null);
-  const [language, setLanguage] = useState("en");
+  const promptsRef = useRef<HTMLDetailsElement>(null);
   const [returning, setReturning] = useState(false);
   const [code, setCode] = useState("");
 
@@ -74,6 +88,17 @@ export function ShareFlow() {
   const [frequency, setFrequency] = useState("");
   const [feelings, setFeelings] = useState<string[]>([]);
   const [feelingsOther, setFeelingsOther] = useState("");
+  const [ageRange, setAgeRange] = useState("");
+  const [gender, setGender] = useState("");
+  const [genderSelfDescribed, setGenderSelfDescribed] = useState("");
+  const [countryOfBirth, setCountryOfBirth] = useState("");
+  const [firstLanguage, setFirstLanguage] = useState("");
+  const [academicStage, setAcademicStage] = useState("");
+  const [mainAiTool, setMainAiTool] = useState("");
+  const [otherAiTools, setOtherAiTools] = useState<string[]>([]);
+  const [aiDuration, setAiDuration] = useState("");
+  const [aiUses, setAiUses] = useState<string[]>([]);
+  const countries = useMemo(() => countryNames(), []);
 
   // Step 3
   const [consentResearch, setConsentResearch] = useState(false);
@@ -82,6 +107,8 @@ export function ShareFlow() {
   const [contactName, setContactName] = useState("");
   const [contactEmail, setContactEmail] = useState("");
   const [website, setWebsite] = useState("");
+  const [files, setFiles] = useState<File[]>([]);
+  const [uploadStatus, setUploadStatus] = useState<string | null>(null);
 
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -89,9 +116,8 @@ export function ShareFlow() {
 
   // Restore browser-only state after hydration (the page is statically rendered).
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setLanguage(browserLanguage());
     const draft = readStorage(DRAFT_KEY, session);
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (draft) setText(draft);
     const saved = readStorage(CODE_KEY);
     if (saved) {
@@ -118,25 +144,46 @@ export function ShareFlow() {
   const textLength = text.trim().length;
   const codeValid = !returning || PARTICIPANT_CODE_PATTERN.test(normalizeParticipantCode(code));
   const canContinue = textLength >= LIMITS.testimonyMin && textLength <= LIMITS.testimonyMax && codeValid;
-  const activePrompt = weekly
-    ? weekly.question
-    : OPTIONAL_PROMPTS.find((p) => p.id === promptId)?.text;
+  const activePrompt = weekly ? weekly.question : OPTIONAL_PROMPTS.find((p) => p.id === promptId)?.text;
 
   async function submit() {
     setSubmitting(true);
     setError(null);
     try {
+      // Files are uploaded only now, after consent. The server checks them and
+      // moves them somewhere only editors can read.
+      const mediaKeys: string[] = [];
+      for (const [i, file] of files.entries()) {
+        setUploadStatus(`Uploading ${i + 1} of ${files.length}…`);
+        const name = file.name.replace(/[^A-Za-z0-9._-]+/g, "-").slice(-100) || "file";
+        const { path } = await uploadData({
+          path: `uploads/${crypto.randomUUID()}/${name}`,
+          data: file,
+          options: { contentType: file.type },
+        }).result;
+        mediaKeys.push(path);
+      }
+      setUploadStatus(files.length ? "Saving…" : null);
       const { data, errors } = await client.mutations.submitTestimony({
         text,
-        language,
         channel: weekly ? "WEEKLY_QUESTION" : "OPEN",
-        promptId: weekly ? undefined : promptId ?? undefined,
+        promptId: weekly ? undefined : (promptId ?? undefined),
         weeklyQuestionId: weekly?.id,
         participantCode: returning ? normalizeParticipantCode(code) : undefined,
         relationship: relationship || undefined,
         fieldOfWork: fieldOfWork || undefined,
         country: country || undefined,
         aiUseFrequency: frequency || undefined,
+        countryOfBirth: countryOfBirth || undefined,
+        ageRange: ageRange || undefined,
+        gender: gender || undefined,
+        genderSelfDescribed: gender === "Self-describe" ? genderSelfDescribed || undefined : undefined,
+        firstLanguage: firstLanguage || undefined,
+        academicStage: academicStage || undefined,
+        mainAiTool: mainAiTool || undefined,
+        otherAiTools: mainAiTool === "I don't use AI" ? [] : otherAiTools.filter((t) => t !== mainAiTool),
+        aiDuration: aiDuration || undefined,
+        aiUses,
         feelings,
         feelingsOther: feelings.includes("Other") ? feelingsOther || undefined : undefined,
         consentResearch,
@@ -145,6 +192,7 @@ export function ShareFlow() {
         consentVersion: CONSENT_VERSION,
         contactName: consentContact ? contactName || undefined : undefined,
         contactEmail: consentContact ? contactEmail || undefined : undefined,
+        mediaKeys,
         website: website || undefined,
       });
       if (!data) throw new Error(errorMessage(errors, "Something went wrong. Please try again."));
@@ -155,6 +203,7 @@ export function ShareFlow() {
       setError(e instanceof Error ? e.message : "Something went wrong. Please try again.");
     } finally {
       setSubmitting(false);
+      setUploadStatus(null);
     }
   }
 
@@ -169,7 +218,11 @@ export function ShareFlow() {
           const Icon = s.icon;
           const reached = i <= stepIndex;
           return (
-            <li key={s.id} aria-current={i === stepIndex ? "step" : undefined} className="flex flex-1 items-center gap-2">
+            <li
+              key={s.id}
+              aria-current={i === stepIndex ? "step" : undefined}
+              className="flex flex-1 items-center gap-2"
+            >
               <span
                 className={`flex size-9 shrink-0 items-center justify-center rounded-full ${
                   reached ? "bg-accent text-card" : "bg-card text-muted ring-1 ring-rule"
@@ -178,7 +231,9 @@ export function ShareFlow() {
                 <Icon aria-hidden className="size-4" />
               </span>
               <span className={`hidden sm:inline ${reached ? "text-ink" : "text-muted"}`}>{s.label}</span>
-              {i < STEPS.length - 1 ? <span aria-hidden className={`h-px flex-1 ${i < stepIndex ? "bg-accent" : "bg-rule"}`} /> : null}
+              {i < STEPS.length - 1 ? (
+                <span aria-hidden className={`h-px flex-1 ${i < stepIndex ? "bg-accent" : "bg-rule"}`} />
+              ) : null}
             </li>
           );
         })}
@@ -203,7 +258,7 @@ export function ShareFlow() {
               <p className="eyebrow">Share your experience</p>
               <h1 className="mt-4 font-serif text-3xl leading-tight sm:text-5xl">{MAIN_PROMPT}</h1>
               <p className="mt-4 text-muted">Any language, any length. No right answers.</p>
-              <details className="group mt-8 rounded-lg bg-card ring-1 ring-rule">
+              <details ref={promptsRef} className="group mt-8 rounded-lg bg-card ring-1 ring-rule">
                 <summary className="flex cursor-pointer list-none items-center gap-3 px-5 py-4 text-sm">
                   <Lightbulb aria-hidden className="size-5 text-accent" />
                   <span className="flex-1">Need a prompt?</span>
@@ -217,7 +272,11 @@ export function ShareFlow() {
                         <button
                           type="button"
                           aria-pressed={selected}
-                          onClick={() => setPromptId(selected ? null : p.id)}
+                          onClick={() => {
+                            setPromptId(selected ? null : p.id);
+                            // Close the list once a prompt is chosen; it shows above the text box.
+                            if (!selected && promptsRef.current) promptsRef.current.open = false;
+                          }}
                           className={`w-full rounded px-3 py-2 text-left font-serif text-lg transition-colors ${
                             selected ? "bg-accent-soft text-ink" : "text-ink-soft hover:bg-paper"
                           }`}
@@ -256,16 +315,11 @@ export function ShareFlow() {
             </span>
           </div>
 
-          <div className="mt-8 grid gap-6 sm:grid-cols-2">
-            <Field label="Language of your testimony">
-              <select value={language} onChange={(e) => setLanguage(e.target.value)} className={inputClass}>
-                {LANGUAGES.map((l) => (
-                  <option key={l.code} value={l.code}>
-                    {l.label}
-                  </option>
-                ))}
-              </select>
-            </Field>
+          <div className="mt-8">
+            <MediaPicker files={files} onChange={setFiles} />
+          </div>
+
+          <div className="mt-8">
             <div>
               <label className="flex items-start gap-3 text-sm">
                 <input
@@ -306,75 +360,142 @@ export function ShareFlow() {
       {step === "context" && (
         <section>
           <h1 className="font-serif text-3xl leading-tight sm:text-4xl">A little context</h1>
-          <p className="mt-3 text-muted">All optional. No names.</p>
+          <p className="mt-3 text-muted">All optional. Skip anything. No names.</p>
 
-          <fieldset className="mt-10">
-            <legend className="mb-3 text-sm font-medium">Your relationship with AI</legend>
-            <div className="flex flex-wrap gap-2">
-              {RELATIONSHIPS.map((r) => (
-                <Chip key={r} selected={relationship === r} onClick={() => setRelationship(relationship === r ? "" : r)}>
-                  {r}
-                </Chip>
+          <Section icon={UserRound} title="About you">
+            <ChipGroup label="Age range" options={AGE_RANGES} value={ageRange} onChange={setAgeRange} />
+            <div>
+              <ChipGroup label="Gender" options={GENDERS} value={gender} onChange={setGender} />
+              {gender === "Self-describe" ? (
+                <input
+                  value={genderSelfDescribed}
+                  onChange={(e) => setGenderSelfDescribed(e.target.value)}
+                  maxLength={LIMITS.shortField}
+                  placeholder="In your own words"
+                  aria-label="Gender, self-described"
+                  className={`${inputClass} mt-3 max-w-sm`}
+                />
+              ) : null}
+            </div>
+            <div className="grid gap-6 sm:grid-cols-2">
+              <Field label="Which country are you in right now?">
+                <input
+                  value={country}
+                  onChange={(e) => setCountry(e.target.value)}
+                  list="harf-countries"
+                  maxLength={LIMITS.shortField}
+                  autoComplete="off"
+                  className={inputClass}
+                />
+              </Field>
+              <Field label="Country of birth">
+                <input
+                  value={countryOfBirth}
+                  onChange={(e) => setCountryOfBirth(e.target.value)}
+                  list="harf-countries"
+                  maxLength={LIMITS.shortField}
+                  autoComplete="off"
+                  className={inputClass}
+                />
+              </Field>
+              <Field label="First language (or languages)">
+                <input
+                  value={firstLanguage}
+                  onChange={(e) => setFirstLanguage(e.target.value)}
+                  maxLength={LIMITS.shortField}
+                  placeholder="Portuguese, English"
+                  className={inputClass}
+                />
+              </Field>
+              <Field label="Academic stage">
+                <select value={academicStage} onChange={(e) => setAcademicStage(e.target.value)} className={inputClass}>
+                  <option value="">Prefer not to say</option>
+                  {ACADEMIC_STAGES.map((a) => (
+                    <option key={a}>{a}</option>
+                  ))}
+                </select>
+              </Field>
+              <Field label="Field of study or work">
+                <input
+                  value={fieldOfWork}
+                  onChange={(e) => setFieldOfWork(e.target.value)}
+                  maxLength={LIMITS.shortField}
+                  placeholder="Philosophy, Nursing, Software"
+                  className={inputClass}
+                />
+              </Field>
+            </div>
+            <ChipGroup
+              label="Your relationship with AI"
+              options={RELATIONSHIPS}
+              value={relationship}
+              onChange={setRelationship}
+            />
+            <datalist id="harf-countries">
+              {countries.map((c) => (
+                <option key={c} value={c} />
               ))}
-            </div>
-          </fieldset>
+            </datalist>
+          </Section>
 
-          <div className="mt-8 grid gap-6 sm:grid-cols-2">
-            <Field label="Field of study or work">
-              <input
-                value={fieldOfWork}
-                onChange={(e) => setFieldOfWork(e.target.value)}
-                maxLength={LIMITS.shortField}
-                placeholder="e.g. Philosophy, Nursing, Software"
-                className={inputClass}
-              />
-            </Field>
-            <Field label="Country">
-              <input
-                value={country}
-                onChange={(e) => setCountry(e.target.value)}
-                maxLength={LIMITS.shortField}
-                placeholder="e.g. United States"
-                className={inputClass}
-              />
-            </Field>
-            <Field label="How often do you use AI?">
-              <select value={frequency} onChange={(e) => setFrequency(e.target.value)} className={inputClass}>
-                <option value="">Prefer not to say</option>
-                {AI_USE_FREQUENCIES.map((f) => (
-                  <option key={f}>{f}</option>
-                ))}
-              </select>
-            </Field>
-          </div>
-
-          <fieldset className="mt-10">
-            <legend className="mb-3 text-sm font-medium">How do you feel about AI? (choose any)</legend>
-            <div className="flex flex-wrap gap-2">
-              {FEELINGS.map((f) => {
-                const selected = feelings.includes(f);
-                return (
-                  <Chip
-                    key={f}
-                    selected={selected}
-                    onClick={() => setFeelings(selected ? feelings.filter((x) => x !== f) : [...feelings, f])}
-                  >
-                    {f}
-                  </Chip>
-                );
-              })}
+          <Section icon={Sparkles} title="Your AI use">
+            <div className="grid gap-6 sm:grid-cols-2">
+              <Field label="Your main AI tool">
+                <select value={mainAiTool} onChange={(e) => setMainAiTool(e.target.value)} className={inputClass}>
+                  <option value="">Prefer not to say</option>
+                  {AI_TOOLS.map((t) => (
+                    <option key={t}>{t}</option>
+                  ))}
+                </select>
+              </Field>
+              <Field label="How often do you use AI?">
+                <select value={frequency} onChange={(e) => setFrequency(e.target.value)} className={inputClass}>
+                  <option value="">Prefer not to say</option>
+                  {AI_USE_FREQUENCIES.map((f) => (
+                    <option key={f}>{f}</option>
+                  ))}
+                </select>
+              </Field>
             </div>
-            {feelings.includes("Other") ? (
-              <input
-                value={feelingsOther}
-                onChange={(e) => setFeelingsOther(e.target.value)}
-                maxLength={LIMITS.shortField}
-                placeholder="In your own words"
-                aria-label="Other feeling"
-                className={`${inputClass} mt-3 max-w-sm`}
+            {mainAiTool !== "I don't use AI" ? (
+              <ChipGroup
+                label="Other AI tools you use (choose any)"
+                options={AI_TOOLS.filter((t) => t !== mainAiTool && t !== "I don't use AI")}
+                values={otherAiTools}
+                onToggle={setOtherAiTools}
               />
             ) : null}
-          </fieldset>
+            <ChipGroup
+              label="How long have you used AI tools?"
+              options={AI_DURATIONS}
+              value={aiDuration}
+              onChange={setAiDuration}
+            />
+            <ChipGroup
+              label="What do you mainly use AI for? (choose any)"
+              options={AI_USES}
+              values={aiUses}
+              onToggle={setAiUses}
+            />
+            <div>
+              <ChipGroup
+                label="How do you feel about AI? (choose any)"
+                options={FEELINGS}
+                values={feelings}
+                onToggle={setFeelings}
+              />
+              {feelings.includes("Other") ? (
+                <input
+                  value={feelingsOther}
+                  onChange={(e) => setFeelingsOther(e.target.value)}
+                  maxLength={LIMITS.shortField}
+                  placeholder="In your own words"
+                  aria-label="Other feeling"
+                  className={`${inputClass} mt-3 max-w-sm`}
+                />
+              ) : null}
+            </div>
+          </Section>
 
           <Nav>
             <button type="button" onClick={() => setStep("write")} className={secondaryButton}>
@@ -407,10 +528,20 @@ export function ShareFlow() {
             >
               {CONSENT_TEXT.research}
             </Consent>
-            <Consent checked={consentPublish} onChange={setConsentPublish} title="Publish an anonymized excerpt" icon={Eye}>
+            <Consent
+              checked={consentPublish}
+              onChange={setConsentPublish}
+              title="Publish an anonymized excerpt"
+              icon={Eye}
+            >
               {CONSENT_TEXT.publish}
             </Consent>
-            <Consent checked={consentContact} onChange={setConsentContact} title="Contact me for a follow-up" icon={Mail}>
+            <Consent
+              checked={consentContact}
+              onChange={setConsentContact}
+              title="Contact me for a follow-up"
+              icon={Mail}
+            >
               {CONSENT_TEXT.contact}
             </Consent>
             {consentContact ? (
@@ -460,7 +591,7 @@ export function ShareFlow() {
               onClick={submit}
               className={primaryButton}
             >
-              {submitting ? "Submitting…" : "Submit testimony"}
+              {submitting ? (uploadStatus ?? "Submitting…") : "Submit testimony"}
             </button>
           </Nav>
           <p className="mt-4 text-right text-xs text-muted">Consent version {CONSENT_VERSION}</p>
@@ -477,7 +608,9 @@ function Done({ result }: { result: { participantCode: string; entryNumber: numb
   return (
     <div className="mx-auto max-w-3xl px-5 pb-10 pt-16 sm:pt-24">
       <CheckCircle2 aria-hidden className="size-12 text-accent" strokeWidth={1.5} />
-      <h1 className="mt-6 font-serif text-4xl leading-tight sm:text-5xl">Thank you. It&apos;s part of the record now.</h1>
+      <h1 className="mt-6 font-serif text-4xl leading-tight sm:text-5xl">
+        Thank you. It&apos;s part of the record now.
+      </h1>
       <p className="mt-4 text-muted">
         {result.entryNumber > 1
           ? `Your ${ordinal(result.entryNumber)} contribution — linked to your earlier ones.`
@@ -486,7 +619,9 @@ function Done({ result }: { result: { participantCode: string; entryNumber: numb
 
       <div className="mt-10 rounded-lg bg-card p-6 shadow-sm ring-1 ring-rule sm:p-8">
         <p className="eyebrow">Your private participant code</p>
-        <p className="mt-3 select-all break-all font-mono text-2xl tracking-wider sm:text-3xl">{result.participantCode}</p>
+        <p className="mt-3 select-all break-all font-mono text-2xl tracking-wider sm:text-3xl">
+          {result.participantCode}
+        </p>
         <p className="mt-4 text-sm text-ink-soft">
           Come back in a few months with this code to tell us what changed. We can&apos;t recover it for you.
         </p>
@@ -550,12 +685,67 @@ function Chip({ selected, onClick, children }: { selected: boolean; onClick: () 
       type="button"
       aria-pressed={selected}
       onClick={onClick}
-      className={`rounded-full border px-4 py-1.5 text-sm transition-colors ${
+      className={`min-h-10 rounded-full border px-4 py-1.5 text-sm transition-colors ${
         selected ? "border-navy bg-navy text-card" : "border-rule bg-card hover:border-ink"
       }`}
     >
       {children}
     </button>
+  );
+}
+
+function Section({ icon: Icon, title, children }: { icon: LucideIcon; title: string; children: ReactNode }) {
+  return (
+    <section className="mt-10 rounded-lg bg-card p-5 ring-1 ring-rule sm:p-7">
+      <h2 className="flex items-center gap-3 font-serif text-2xl">
+        <span className="flex size-9 items-center justify-center rounded-full bg-accent-soft text-accent">
+          <Icon aria-hidden className="size-4" />
+        </span>
+        {title}
+      </h2>
+      <div className="mt-6 space-y-7">{children}</div>
+    </section>
+  );
+}
+
+/** A row of chips: single choice with value/onChange, multiple with values/onToggle. */
+function ChipGroup({
+  label,
+  options,
+  value,
+  onChange,
+  values,
+  onToggle,
+}: {
+  label: string;
+  options: readonly string[];
+  value?: string;
+  onChange?: (v: string) => void;
+  values?: string[];
+  onToggle?: (v: string[]) => void;
+}) {
+  return (
+    <fieldset>
+      <legend className="mb-3 text-sm font-medium">{label}</legend>
+      <div className="flex flex-wrap gap-2">
+        {options.map((o) => {
+          const selected = values ? values.includes(o) : value === o;
+          return (
+            <Chip
+              key={o}
+              selected={selected}
+              onClick={() =>
+                values && onToggle
+                  ? onToggle(selected ? values.filter((x) => x !== o) : [...values, o])
+                  : onChange?.(selected ? "" : o)
+              }
+            >
+              {o}
+            </Chip>
+          );
+        })}
+      </div>
+    </fieldset>
   );
 }
 
@@ -592,11 +782,19 @@ function Consent({
       <span className="flex-1">
         <span className="block font-medium">
           {title}
-          <span className="ml-2 text-xs uppercase tracking-[0.12em] text-muted">{required ? "Required" : "Optional"}</span>
+          <span className="ml-2 text-xs uppercase tracking-[0.12em] text-muted">
+            {required ? "Required" : "Optional"}
+          </span>
         </span>
         <span className="mt-1 block text-sm leading-relaxed text-muted">{children}</span>
       </span>
-      <input id={id} type="checkbox" checked={checked} onChange={(e) => onChange(e.target.checked)} className="mt-1 size-5 shrink-0 accent-accent" />
+      <input
+        id={id}
+        type="checkbox"
+        checked={checked}
+        onChange={(e) => onChange(e.target.checked)}
+        className="mt-1 size-5 shrink-0 accent-accent"
+      />
     </label>
   );
 }

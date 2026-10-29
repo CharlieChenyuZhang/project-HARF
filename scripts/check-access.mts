@@ -8,6 +8,7 @@ import { Amplify } from "aws-amplify";
 import { generateClient } from "aws-amplify/data";
 import { readFileSync } from "node:fs";
 import type { Schema } from "../amplify/data/resource";
+import { CONSENT_VERSION } from "../src/lib/harf";
 
 Amplify.configure(JSON.parse(readFileSync(new URL("../amplify_outputs.json", import.meta.url), "utf8")));
 const client = generateClient<Schema>();
@@ -45,7 +46,7 @@ await expect("submission without research consent is rejected", false, () =>
     consentResearch: false,
     consentPublish: false,
     consentContact: false,
-    consentVersion: "2026-10-28.v1",
+    consentVersion: CONSENT_VERSION,
   }),
 );
 

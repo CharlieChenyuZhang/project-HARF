@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto";
 import type { AppSyncResolverEvent } from "aws-lambda";
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import { DynamoDBDocumentClient, GetCommand, TransactWriteCommand } from "@aws-sdk/lib-dynamodb";
+import { DeleteObjectsCommand, S3Client } from "@aws-sdk/client-s3";
 import { LIMITS, THEMES } from "../../../src/lib/harf";
 
 const db = DynamoDBDocumentClient.from(new DynamoDBClient({}), {
@@ -11,6 +12,9 @@ const db = DynamoDBDocumentClient.from(new DynamoDBClient({}), {
 const TESTIMONY_TABLE = process.env.TESTIMONY_TABLE!;
 const EXCERPT_TABLE = process.env.EXCERPT_TABLE!;
 const CONTACT_TABLE = process.env.CONTACT_TABLE!;
+const MEDIA_BUCKET = process.env.MEDIA_BUCKET!;
+
+const s3 = new S3Client({});
 
 type PublishArgs = {
   testimonyId: string;
@@ -122,6 +126,12 @@ async function remove(testimonyId: string) {
       ],
     }),
   );
+  const media = (testimony.media as { key: string }[] | undefined) ?? [];
+  if (media.length) {
+    await s3.send(
+      new DeleteObjectsCommand({ Bucket: MEDIA_BUCKET, Delete: { Objects: media.map((m) => ({ Key: m.key })) } }),
+    );
+  }
   return true;
 }
 
