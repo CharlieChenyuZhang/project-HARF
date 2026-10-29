@@ -26,8 +26,22 @@ export const OPTIONAL_PROMPTS = [
   },
 ] as const;
 
+// Opening of the share flow: an easy first answer, then a concrete moment.
+export const OPENING_QUESTION = "Have you noticed AI changing the way you think?";
+export const NOTICED_CHANGE = [
+  "I rely on it more than I expected.",
+  "I feel more capable with it.",
+  "I sometimes question my own abilities.",
+  "I haven't noticed much change.",
+  "I'm still figuring it out.",
+] as const;
+export const FIRST_NOTICED_PROMPT = "Can you remember a moment when you first noticed this?";
+
 export const MAIN_PROMPT =
-  "What's happening in your relationship with AI that you haven't had the chance to talk about?";
+  "Can you describe a specific moment when AI changed something about the way you think, work, learn, or relate to others?";
+
+// Shown after a contribution. One reflection for the MVP; could vary by theme later.
+export const REFLECTION = "What if the most important change isn't what AI can do, but what you no longer do without it?";
 
 export const RELATIONSHIPS = ["Student", "Educator", "Researcher", "Professional", "Other"] as const;
 
@@ -125,7 +139,7 @@ export type EditorialStatus = (typeof EDITORIAL_STATUSES)[number];
  * The consent wording a participant agrees to. Bump the version whenever the
  * text changes: every testimony stores the version it was submitted under.
  */
-export const CONSENT_VERSION = "2026-10-28.v2";
+export const CONSENT_VERSION = "2026-10-29.v3";
 
 export const CONSENT_TEXT = {
   research:
@@ -133,7 +147,9 @@ export const CONSENT_TEXT = {
   publish:
     "HARF may publish an anonymized excerpt of my contribution in the Living Archive after editorial review. Nothing is published automatically.",
   contact:
-    "HARF may contact me about a future interview or follow-up. My contact details are stored separately from my testimony and never published.",
+    "HARF may contact me about a future interview. My contact details are stored separately from my testimony and never published.",
+  revisit:
+    "HARF may email me in about six months to invite me to revisit my answers. My email is stored separately from my contribution, never published, and used for nothing else.",
 } as const;
 
 export const LIMITS = {
@@ -169,6 +185,22 @@ export const MEDIA = {
 export function isAllowedMediaType(type: string): boolean {
   return (MEDIA.types as readonly string[]).includes(type);
 }
+
+/** Anonymous usage events. Anything else sent to `track` is rejected. */
+export const ANALYTICS_EVENTS = [
+  "page_view",
+  "share_click",
+  "survey_click",
+  "archive_click",
+  "qotw_click",
+  "story_start",
+  "story_submit",
+  "survey_view",
+  "survey_start",
+  "survey_submit",
+  "followup_optin",
+] as const;
+export type AnalyticsEventName = (typeof ANALYTICS_EVENTS)[number];
 
 /** Participant codes look like HARF-7K2M-QX9D-4TPA (60 bits of entropy). */
 export const PARTICIPANT_CODE_PATTERN = /^HARF-[A-Z2-9]{4}-[A-Z2-9]{4}-[A-Z2-9]{4}$/;

@@ -1,43 +1,64 @@
-import { Database, Eye, Hourglass, KeyRound, Lock, Mail, type LucideIcon } from "lucide-react";
+import {
+  BarChart3,
+  Database,
+  Eye,
+  HelpCircle,
+  KeyRound,
+  Lock,
+  Mail,
+  UserX,
+  type LucideIcon,
+} from "lucide-react";
 import type { Metadata } from "next";
 import { IconCard, PageHero } from "@/components/page-hero";
 import { CONSENT_TEXT, CONSENT_VERSION } from "@/lib/harf";
+import { WithdrawalForm } from "./withdrawal-form";
 
 export const metadata: Metadata = {
   title: "Privacy & consent",
-  description: "How HARF uses, retains, protects and removes the testimonies people share.",
+  description: "Why HARF collects experiences, how they are stored and used, and how to withdraw.",
 };
 
 const SECTIONS: { icon: LucideIcon; title: string; body: string }[] = [
   {
+    icon: HelpCircle,
+    title: "Why we ask",
+    body: "To keep a record of how people experience AI while it is happening, before memories and interpretations change. Over time it may support journalism, research and comparative studies.",
+  },
+  {
     icon: Database,
     title: "What we collect",
-    body: "Your testimony and any images, audio or video you attach. Only if you choose: age range, gender, countries, first language, academic stage, field, and how you use and feel about AI. No name or institution is required. HARF is for people aged 18 and over.",
+    body: "Your story and any images, audio or video you attach. Only if you choose: age range, gender, countries, first language, academic stage, field, and how you use and feel about AI. No name or institution is ever required. HARF is for people aged 18 and over.",
+  },
+  {
+    icon: Lock,
+    title: "How it's stored and used",
+    body: "On Amazon Web Services in the United States (Ohio), encrypted in transit and at rest. Only HARF editors can see private records. Your original words are kept exactly as written and used for research and editorial work.",
   },
   {
     icon: Eye,
-    title: "Publication",
-    body: "Nothing is published automatically. With your permission, an editor may publish a short anonymized excerpt with only a broad category such as “Student”. Your other answers are never published.",
+    title: "What may be published",
+    body: "Nothing is published automatically. Only if you allow it, an editor may publish a short excerpt with a broad label such as “Student”. Anything that could identify you is removed, and identifiable information is never published without your explicit permission.",
+  },
+  {
+    icon: UserX,
+    title: "No public attribution",
+    body: "You can take part without anyone knowing it was you. We don't ask for your name, and published excerpts are never credited to a person.",
   },
   {
     icon: Mail,
-    title: "Contact details",
-    body: "Collected only if you ask to be contacted. Stored in a separate table, visible only to editors, never published.",
+    title: "Future contact",
+    body: "Two separate, optional choices: an interview, or an invitation to revisit your answers in six months. Emails are stored apart from your story, never published, and used only for what you agreed to.",
   },
   {
     icon: KeyRound,
     title: "Your participant code",
-    body: "Links your future contributions without identifying you. We store only a one-way fingerprint (SHA-256), so we can't recover it.",
+    body: "Links your contributions over time without identifying you. We store only a one-way fingerprint of it, so we can't look it up or recover it.",
   },
   {
-    icon: Lock,
-    title: "Storage & protection",
-    body: "Amazon Web Services, United States (Ohio): text in a database, attachments in private file storage. Encrypted in transit and at rest. Only signed-in editors can see private records or files.",
-  },
-  {
-    icon: Hourglass,
-    title: "Retention & removal",
-    body: "Kept for the life of the archive unless you ask us to remove it. Removal deletes the text and attachments; backups clear after 35 days.",
+    icon: BarChart3,
+    title: "Usage statistics",
+    body: "To see whether people find and finish the site, we count visits and steps anonymously, using a random ID kept in your browser. No IP addresses, no advertising or third-party trackers, and nothing is sent if your browser asks not to be tracked. Records expire after 13 months.",
   },
 ];
 
@@ -45,13 +66,10 @@ export default function PrivacyPage() {
   return (
     <>
       <PageHero eyebrow="Privacy & consent" title="How we treat what you share">
-        Your original words are kept exactly as written. You decide what else happens.
+        Your experience is yours. You decide whether it is published, and you can ask us to remove it at any time.
       </PageHero>
       <div className="mx-auto max-w-6xl px-5 pt-10">
-        <p className="rounded-lg bg-accent-soft px-4 py-3 text-sm text-accent">
-          Draft for review — to be finalized, with a contact address for removal requests, before real submissions open.
-        </p>
-        <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {SECTIONS.map(({ icon: Icon, title, body }) => (
             <IconCard key={title} icon={<Icon aria-hidden className="size-6" strokeWidth={1.6} />} title={title}>
               {body}
@@ -60,16 +78,19 @@ export default function PrivacyPage() {
         </div>
 
         <section className="mt-16">
-          <h2 className="font-serif text-3xl">Your three choices</h2>
-          <p className="mt-1 text-sm text-muted">Consent version {CONSENT_VERSION}, recorded with every contribution.</p>
-          <ol className="mt-6 grid gap-4 md:grid-cols-3">
+          <h2 className="font-serif text-3xl">Your separate choices</h2>
+          <p className="mt-1 text-sm text-muted">
+            Each is asked on its own and recorded with every contribution (consent version {CONSENT_VERSION}).
+          </p>
+          <ol className="mt-6 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
             {[
-              ["Research", "Required", CONSENT_TEXT.research],
+              ["Participation", "Required", CONSENT_TEXT.research],
               ["Publication", "Optional", CONSENT_TEXT.publish],
-              ["Follow-up", "Optional", CONSENT_TEXT.contact],
+              ["Interview", "Optional", CONSENT_TEXT.contact],
+              ["Six-month invitation", "Optional", CONSENT_TEXT.revisit],
             ].map(([title, kind, text], i) => (
               <li key={title} className="rounded-lg bg-card p-6 ring-1 ring-rule">
-                <p className="flex items-baseline justify-between">
+                <p className="flex items-baseline justify-between gap-2">
                   <span className="font-serif text-xl">
                     {i + 1}. {title}
                   </span>
@@ -79,7 +100,20 @@ export default function PrivacyPage() {
               </li>
             ))}
           </ol>
-          <p className="mt-6 text-sm text-muted">The structured survey is hosted by Tally and covered by its own notice.</p>
+        </section>
+
+        <section id="withdraw" className="mt-16 scroll-mt-24">
+          <h2 className="font-serif text-3xl">Withdraw or delete a contribution</h2>
+          <p className="mt-2 max-w-2xl text-ink-soft">
+            Send a request below; no account is needed. With your participant code we can find everything you shared.
+            We delete the text, attachments, contact details and any published excerpt. Backups clear within 35 days.
+          </p>
+          <div className="mt-6">
+            <WithdrawalForm />
+          </div>
+          <p className="mt-6 text-sm text-muted">
+            The structured survey is hosted by Tally and covered by its own notice.
+          </p>
         </section>
       </div>
     </>

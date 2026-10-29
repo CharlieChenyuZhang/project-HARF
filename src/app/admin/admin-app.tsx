@@ -5,13 +5,17 @@ import { Authenticator } from "@aws-amplify/ui-react";
 import { fetchAuthSession } from "aws-amplify/auth";
 import { useEffect, useState } from "react";
 import "@/lib/amplify";
+import { AnalyticsPanel } from "./analytics-panel";
 import { ExportPanel } from "./export-panel";
+import { RequestsPanel } from "./requests-panel";
 import { TestimonyReview } from "./testimony-review";
 import { WeeklyQuestions } from "./weekly-questions";
 
 const TABS = [
   { id: "review", label: "Testimonies" },
   { id: "weekly", label: "Question of the Week" },
+  { id: "requests", label: "Withdrawal requests" },
+  { id: "analytics", label: "Analytics" },
   { id: "export", label: "Export" },
 ] as const;
 type Tab = (typeof TABS)[number]["id"];
@@ -58,7 +62,7 @@ function Dashboard({ email, signOut }: { email?: string; signOut?: () => void })
         </p>
       ) : isEditor ? (
         <>
-          <nav className="mt-6 flex gap-6 text-sm" aria-label="Dashboard sections">
+          <nav className="mt-6 flex flex-wrap gap-x-6 gap-y-2 text-sm" aria-label="Dashboard sections">
             {TABS.map((t) => (
               <button
                 key={t.id}
@@ -74,6 +78,8 @@ function Dashboard({ email, signOut }: { email?: string; signOut?: () => void })
           <div className="mt-8">
             {tab === "review" && <TestimonyReview />}
             {tab === "weekly" && <WeeklyQuestions />}
+            {tab === "requests" && <RequestsPanel />}
+            {tab === "analytics" && <AnalyticsPanel />}
             {tab === "export" && <ExportPanel />}
           </div>
         </>

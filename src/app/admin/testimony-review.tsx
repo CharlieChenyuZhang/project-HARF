@@ -2,7 +2,14 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { client, errorMessage, listAll, type Contact, type Testimony } from "@/lib/amplify";
-import { EDITORIAL_STATUSES, LANGUAGES, THEMES, type EditorialStatus } from "@/lib/harf";
+import {
+  EDITORIAL_STATUSES,
+  FIRST_NOTICED_PROMPT,
+  LANGUAGES,
+  OPENING_QUESTION,
+  THEMES,
+  type EditorialStatus,
+} from "@/lib/harf";
 import { MediaGallery } from "./media-gallery";
 import { Badge, Notice, STATUS_LABEL, inputClass, primaryButton, secondaryButton } from "./ui";
 
@@ -276,8 +283,28 @@ function TestimonyDetail({
         ) : null}
       </header>
 
+      {t.noticedChange ? (
+        <div className="rounded-sm border border-rule bg-card p-5 text-sm">
+          <p className="eyebrow mb-2">{OPENING_QUESTION}</p>
+          <p className="font-serif text-lg">{t.noticedChange}</p>
+          {t.firstNoticed ? (
+            <>
+              <p className="eyebrow mb-1 mt-4">{FIRST_NOTICED_PROMPT}</p>
+              <p className="whitespace-pre-wrap font-serif text-base leading-relaxed">{t.firstNoticed}</p>
+            </>
+          ) : null}
+        </div>
+      ) : null}
+
       <div>
-        {t.promptText ? <p className="mb-3 font-serif text-lg italic text-accent">{t.promptText}</p> : null}
+        {t.promptText ? (
+          <p className="mb-3 font-serif text-lg italic text-accent">
+            {t.promptText}
+            {t.weeklyQuestionWeekOf ? (
+              <span className="ml-2 font-sans text-xs not-italic text-muted">Question of the week, {t.weeklyQuestionWeekOf}</span>
+            ) : null}
+          </p>
+        ) : null}
         <div className="rounded-sm border border-rule bg-card p-6">
           <p className="eyebrow mb-3">Original testimony · preserved, read-only</p>
           <p className="whitespace-pre-wrap font-serif text-lg leading-relaxed">{t.originalText}</p>
@@ -400,7 +427,12 @@ function TestimonyDetail({
       <div className="space-y-4 border-t border-ink pt-6">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <p className="eyebrow">Public excerpt</p>
-          {t.excerptId ? <Badge tone="ok">Live in archive</Badge> : null}
+          {t.excerptId ? (
+            <span className="flex items-center gap-3">
+              <FeatureToggle excerptId={t.excerptId} />
+              <Badge tone="ok">Live in archive</Badge>
+            </span>
+          ) : null}
         </div>
         {!t.consentPublish ? (
           <Notice kind="error">The participant did not allow publication. This testimony can&apos;t be published.</Notice>
@@ -442,6 +474,33 @@ function TestimonyDetail({
         </button>
       </div>
     </article>
+  );
+}
+
+/** Hand-pick a published excerpt for the homepage's "From the archive" section. */
+function FeatureToggle({ excerptId }: { excerptId: string }) {
+  const [featured, setFeatured] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    client.models.Excerpt.get({ id: excerptId }, auth).then(({ data }) => setFeatured(data?.featured === true));
+  }, [excerptId]);
+
+  if (featured === null) return null;
+  return (
+    <label className="flex cursor-pointer items-center gap-2 text-xs">
+      <input
+        type="checkbox"
+        checked={featured}
+        onChange={async (e) => {
+          const next = e.target.checked;
+          setFeatured(next);
+          const { errors } = await client.models.Excerpt.update({ id: excerptId, featured: next }, auth);
+          if (errors?.length) setFeatured(!next);
+        }}
+        className="size-4 accent-accent"
+      />
+      Feature on homepage
+    </label>
   );
 }
 

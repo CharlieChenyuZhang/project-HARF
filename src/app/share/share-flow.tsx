@@ -1,7 +1,6 @@
 "use client";
 
 import {
-  CheckCircle2,
   ChevronDown,
   Database,
   Eye,
@@ -17,8 +16,9 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useId, useMemo, useRef, useState, type ReactNode } from "react";
 import { MediaPicker } from "./media-picker";
-import { CircleLink } from "@/components/circle-link";
 import { uploadData } from "aws-amplify/storage";
+import { ContributionThanks } from "@/components/contribution-thanks";
+import { track } from "@/lib/analytics";
 import { client, errorMessage, type WeeklyQuestion } from "@/lib/amplify";
 import { countryNames } from "@/lib/countries";
 import {
@@ -33,7 +33,10 @@ import {
   CONSENT_VERSION,
   FEELINGS,
   LIMITS,
+  FIRST_NOTICED_PROMPT,
   MAIN_PROMPT,
+  NOTICED_CHANGE,
+  OPENING_QUESTION,
   OPTIONAL_PROMPTS,
   PARTICIPANT_CODE_PATTERN,
   RELATIONSHIPS,
@@ -112,7 +115,16 @@ export function ShareFlow() {
 
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [result, setResult] = useState<{ participantCode: string; entryNumber: number } | null>(null);
+  const [result, setResult] = useState<Result | null>(null);
+  const [noticedChange, setNoticedChange] = useState("");
+  const [firstNoticed, setFirstNoticed] = useState("");
+  const started = useRef(false);
+  // Counts one "story started" per visit, on the first answer or keystroke.
+  const markStarted = () => {
+    if (started.current) return;
+    started.current = true;
+    track("story_start", weekly ? "weekly" : "open");
+  };
 
   // Restore browser-only state after hydration (the page is statically rendered).
   useEffect(() => {
@@ -192,11 +204,18 @@ export function ShareFlow() {
         consentVersion: CONSENT_VERSION,
         contactName: consentContact ? contactName || undefined : undefined,
         contactEmail: consentContact ? contactEmail || undefined : undefined,
+        noticedChange: weekly ? undefined : noticedChange || undefined,
+        firstNoticed: weekly || !noticedChange ? undefined : firstNoticed || undefined,
         mediaKeys,
         website: website || undefined,
       });
       if (!data) throw new Error(errorMessage(errors, "Something went wrong. Please try again."));
-      setResult({ participantCode: data.participantCode, entryNumber: data.entryNumber });
+      setResult({
+        testimonyId: data.testimonyId,
+        participantCode: data.participantCode,
+        entryNumber: data.entryNumber,
+      });
+      track("story_submit", weekly ? "weekly" : "open");
       writeStorage(DRAFT_KEY, null, session);
       setStep("done");
     } catch (e) {
@@ -256,8 +275,47 @@ export function ShareFlow() {
           ) : (
             <>
               <p className="eyebrow">Share your experience</p>
-              <h1 className="mt-4 font-serif text-3xl leading-tight sm:text-5xl">{MAIN_PROMPT}</h1>
-              <p className="mt-4 text-muted">Any language, any length. No right answers.</p>
+              <h1 className="mt-4 font-serif text-3xl leading-tight sm:text-5xl">{OPENING_QUESTION}</h1>
+              <div role="radiogroup" aria-label={OPENING_QUESTION} className="mt-8 grid gap-2 sm:grid-cols-2">
+                {NOTICED_CHANGE.map((option) => {
+                  const selected = noticedChange === option;
+                  return (
+                    <button
+                      key={option}
+                      type="button"
+                      role="radio"
+                      aria-checked={selected}
+                      onClick={() => {
+                        markStarted();
+                        setNoticedChange(selected ? "" : option);
+                      }}
+                      className={`min-h-12 rounded-lg px-4 py-3 text-left font-serif text-lg ring-1 transition-colors ${
+                        selected ? "bg-navy text-card ring-navy" : "bg-card ring-rule hover:ring-ink"
+                      }`}
+                    >
+                      {option}
+                    </button>
+                  );
+                })}
+              </div>
+              {noticedChange ? (
+                <label className="mt-6 block">
+                  <span className="mb-2 block font-serif text-xl">{FIRST_NOTICED_PROMPT}</span>
+                  <textarea
+                    value={firstNoticed}
+                    onChange={(e) => setFirstNoticed(e.target.value)}
+                    rows={3}
+                    maxLength={5000}
+                    placeholder="Optional"
+                    className="w-full resize-y rounded-lg border border-rule bg-card px-4 py-3 font-serif text-lg leading-relaxed placeholder:text-muted/70 focus:border-ink focus:outline-none focus-visible:outline-none"
+                  />
+                </label>
+              ) : null}
+
+              <h2 className="mt-12 font-serif text-2xl leading-snug sm:text-3xl">{MAIN_PROMPT}</h2>
+              <p className="mt-3 text-muted">
+                A concrete moment matters more than a general opinion. Any language, any length.
+              </p>
               <details ref={promptsRef} className="group mt-8 rounded-lg bg-card ring-1 ring-rule">
                 <summary className="flex cursor-pointer list-none items-center gap-3 px-5 py-4 text-sm">
                   <Lightbulb aria-hidden className="size-5 text-accent" />
@@ -299,7 +357,10 @@ export function ShareFlow() {
             )}
             <textarea
               value={text}
-              onChange={(e) => setText(e.target.value)}
+              onChange={(e) => {
+                markStarted();
+                setText(e.target.value);
+              }}
               rows={8}
               maxLength={LIMITS.testimonyMax}
               placeholder="Start writing…"
@@ -539,7 +600,7 @@ export function ShareFlow() {
             <Consent
               checked={consentContact}
               onChange={setConsentContact}
-              title="Contact me for a follow-up"
+              title="Contact me for an interview"
               icon={Mail}
             >
               {CONSENT_TEXT.contact}
@@ -601,58 +662,51 @@ export function ShareFlow() {
   );
 }
 
-function Done({ result }: { result: { participantCode: string; entryNumber: number } }) {
+type Result = { testimonyId: string; participantCode: string; entryNumber: number };
+
+function Done({ result }: { result: Result }) {
   const [copied, setCopied] = useState(false);
   const [remembered, setRemembered] = useState(false);
 
   return (
     <div className="mx-auto max-w-3xl px-5 pb-10 pt-16 sm:pt-24">
-      <CheckCircle2 aria-hidden className="size-12 text-accent" strokeWidth={1.5} />
-      <h1 className="mt-6 font-serif text-4xl leading-tight sm:text-5xl">
-        Thank you. It&apos;s part of the record now.
-      </h1>
-      <p className="mt-4 text-muted">
-        {result.entryNumber > 1
-          ? `Your ${ordinal(result.entryNumber)} contribution — linked to your earlier ones.`
-          : "Nothing is published automatically."}
-      </p>
-
-      <div className="mt-10 rounded-lg bg-card p-6 shadow-sm ring-1 ring-rule sm:p-8">
-        <p className="eyebrow">Your private participant code</p>
-        <p className="mt-3 select-all break-all font-mono text-2xl tracking-wider sm:text-3xl">
-          {result.participantCode}
-        </p>
-        <p className="mt-4 text-sm text-ink-soft">
-          Come back in a few months with this code to tell us what changed. We can&apos;t recover it for you.
-        </p>
-        <div className="mt-6 flex flex-wrap gap-3">
-          <button
-            type="button"
-            className={secondaryButton}
-            onClick={() => {
-              navigator.clipboard?.writeText(result.participantCode).then(() => setCopied(true));
-            }}
-          >
-            {copied ? "Copied" : "Copy code"}
-          </button>
-          <button
-            type="button"
-            className={secondaryButton}
-            disabled={remembered}
-            onClick={() => {
-              writeStorage(CODE_KEY, result.participantCode);
-              setRemembered(true);
-            }}
-          >
-            {remembered ? "Remembered on this device" : "Remember on this device"}
-          </button>
+      <ContributionThanks source="story" testimonyId={result.testimonyId} participantCode={result.participantCode}>
+        <div className="mt-10 rounded-lg bg-card p-6 shadow-sm ring-1 ring-rule sm:p-8">
+          <p className="eyebrow">Your private participant code</p>
+          <p className="mt-3 select-all break-all font-mono text-2xl tracking-wider sm:text-3xl">
+            {result.participantCode}
+          </p>
+          <p className="mt-4 text-sm text-ink-soft">
+            {result.entryNumber > 1
+              ? `This is your ${ordinal(result.entryNumber)} contribution, linked to your earlier ones. `
+              : ""}
+            Use this code whenever you share again, so your stories stay connected without your name. We can&apos;t
+            recover it for you.
+          </p>
+          <div className="mt-6 flex flex-wrap gap-3">
+            <button
+              type="button"
+              className={secondaryButton}
+              onClick={() => {
+                navigator.clipboard?.writeText(result.participantCode).then(() => setCopied(true));
+              }}
+            >
+              {copied ? "Copied" : "Copy code"}
+            </button>
+            <button
+              type="button"
+              className={secondaryButton}
+              disabled={remembered}
+              onClick={() => {
+                writeStorage(CODE_KEY, result.participantCode);
+                setRemembered(true);
+              }}
+            >
+              {remembered ? "Remembered on this device" : "Remember on this device"}
+            </button>
+          </div>
         </div>
-      </div>
-
-      <div className="mt-12 flex flex-wrap gap-6 text-sm">
-        <CircleLink href="/archive/">Explore the archive</CircleLink>
-        <CircleLink href="/survey/">Take the survey too</CircleLink>
-      </div>
+      </ContributionThanks>
     </div>
   );
 }

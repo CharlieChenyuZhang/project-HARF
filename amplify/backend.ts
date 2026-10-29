@@ -5,8 +5,9 @@ import { data } from "./data/resource";
 import { storage } from "./storage/resource";
 import { submitTestimony } from "./functions/submit-testimony/resource";
 import { editorial } from "./functions/editorial/resource";
+import { participant } from "./functions/participant/resource";
 
-const backend = defineBackend({ auth, data, storage, submitTestimony, editorial });
+const backend = defineBackend({ auth, data, storage, submitTestimony, editorial, participant });
 
 const { tables, cfnResources } = backend.data.resources;
 
@@ -17,6 +18,8 @@ backend.auth.resources.cfnResources.cfnUserPool.adminCreateUserConfig = { allowA
 for (const table of Object.values(cfnResources.amplifyDynamoDbTables)) {
   table.pointInTimeRecoveryEnabled = true;
 }
+// Usage events delete themselves after about 13 months.
+cfnResources.amplifyDynamoDbTables.AnalyticsEvent.timeToLiveAttribute = { attributeName: "expiresAt", enabled: true };
 
 const submitFn = backend.submitTestimony.resources.lambda;
 tables.Testimony.grantReadWriteData(submitFn);
@@ -61,3 +64,13 @@ bucket.grantDelete(submitFn, "media/*");
 backend.submitTestimony.addEnvironment("MEDIA_BUCKET", bucket.bucketName);
 bucket.grantDelete(editorialFn, "media/*");
 backend.editorial.addEnvironment("MEDIA_BUCKET", bucket.bucketName);
+
+const participantFn = backend.participant.resources.lambda;
+tables.Testimony.grantReadData(participantFn);
+tables.Contact.grantWriteData(participantFn);
+tables.WithdrawalRequest.grantWriteData(participantFn);
+tables.AnalyticsEvent.grantWriteData(participantFn);
+backend.participant.addEnvironment("TESTIMONY_TABLE", tables.Testimony.tableName);
+backend.participant.addEnvironment("CONTACT_TABLE", tables.Contact.tableName);
+backend.participant.addEnvironment("WITHDRAWAL_TABLE", tables.WithdrawalRequest.tableName);
+backend.participant.addEnvironment("ANALYTICS_TABLE", tables.AnalyticsEvent.tableName);

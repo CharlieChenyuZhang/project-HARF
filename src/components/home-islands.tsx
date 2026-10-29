@@ -1,6 +1,7 @@
 "use client";
 
 import { MessageCircleQuestionMark } from "lucide-react";
+import Link from "next/link";
 import { useEffect, useState } from "react";
 import { client, fetchCurrentWeeklyQuestion, listAll, type Excerpt, type WeeklyQuestion } from "@/lib/amplify";
 import { CircleLink } from "./circle-link";
@@ -16,53 +17,64 @@ export function WeeklyQuestionCard() {
   }, []);
 
   if (question === null) return null;
+  const href = question ? `/share/?weekly=${question.id}` : "/share/";
 
   return (
-    <section className="mx-auto max-w-6xl px-5">
-      <div className="grid items-center gap-8 rounded-lg bg-card p-8 shadow-sm ring-1 ring-rule sm:p-12 md:grid-cols-[auto_1fr_auto]">
-        <span className="flex size-16 items-center justify-center rounded-full bg-accent-soft text-accent">
+    <section className="mx-auto max-w-6xl px-5 pt-16">
+      <div className="grid items-center gap-6 rounded-lg bg-navy p-8 text-card sm:p-12 md:grid-cols-[auto_1fr_auto] md:gap-8">
+        <span className="flex size-16 items-center justify-center rounded-full bg-card/10 text-card">
           <MessageCircleQuestionMark aria-hidden className="size-8" strokeWidth={1.5} />
         </span>
         <div>
-          <p className="eyebrow">Question of the week</p>
+          <p className="text-xs uppercase tracking-[0.18em] text-card/60">
+            Question of the week
+            {question?.weekOf
+              ? ` · ${new Date(`${question.weekOf}T12:00:00Z`).toLocaleDateString("en-US", { month: "long", day: "numeric" })}`
+              : ""}
+          </p>
           {question === undefined ? (
-            <div className="mt-3 h-10 max-w-xl animate-pulse rounded bg-paper-deep" />
+            <div className="mt-3 h-10 max-w-xl animate-pulse rounded bg-card/10" />
           ) : (
-            <h2 className="mt-2 font-serif text-2xl leading-snug sm:text-3xl">{question.question}</h2>
+            <Link href={href} data-track="qotw_click" data-track-from="home_question" className="hover:underline">
+              <h2 className="mt-2 font-serif text-2xl leading-snug sm:text-3xl">{question.question}</h2>
+            </Link>
           )}
         </div>
-        {question ? <CircleLink href={`/share/?weekly=${question.id}`}>Respond</CircleLink> : null}
+        {question ? (
+          <span data-track="qotw_click" data-track-from="home_button">
+            <CircleLink href={href} tone="light">
+              Respond
+            </CircleLink>
+          </span>
+        ) : null}
       </div>
     </section>
   );
 }
 
+/** Excerpts an editor has chosen to feature. Renders nothing until there are any. */
 export function ArchivePreview() {
-  const [excerpts, setExcerpts] = useState<Excerpt[] | null>(null);
-  const [failed, setFailed] = useState(false);
+  const [excerpts, setExcerpts] = useState<Excerpt[]>([]);
 
   useEffect(() => {
-    listAll((nextToken) => client.models.Excerpt.list({ nextToken }))
+    listAll((nextToken) => client.models.Excerpt.list({ filter: { featured: { eq: true } }, nextToken }))
       .then((items) => setExcerpts(items.sort((a, b) => b.publishedAt.localeCompare(a.publishedAt)).slice(0, 3)))
-      .catch(() => setFailed(true));
+      .catch(() => setExcerpts([]));
   }, []);
 
-  if (failed) return <p className="text-muted">The archive is unavailable right now.</p>;
-  if (!excerpts)
-    return (
-      <div className="grid gap-6 md:grid-cols-3">
-        {[0, 1, 2].map((i) => (
-          <div key={i} className="h-64 animate-pulse rounded-lg bg-card" />
-        ))}
-      </div>
-    );
-  if (!excerpts.length) return <p className="text-muted">The first stories are being reviewed.</p>;
+  if (!excerpts.length) return null;
 
   return (
-    <div className="grid gap-6 md:grid-cols-3">
-      {excerpts.map((e) => (
-        <ExcerptCard key={e.id} excerpt={e} />
-      ))}
-    </div>
+    <section className="mx-auto max-w-6xl px-5 pt-24">
+      <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
+        <h2 className="font-serif text-3xl sm:text-4xl">From the archive</h2>
+        <CircleLink href="/archive/">See all stories</CircleLink>
+      </div>
+      <div className="grid gap-6 md:grid-cols-3">
+        {excerpts.map((e) => (
+          <ExcerptCard key={e.id} excerpt={e} />
+        ))}
+      </div>
+    </section>
   );
 }

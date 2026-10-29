@@ -1,5 +1,7 @@
 import type { Metadata, Viewport } from "next";
+import { Suspense } from "react";
 import { Inter, Newsreader } from "next/font/google";
+import { Analytics } from "@/components/analytics";
 import { PreviewBanner, SiteFooter, SiteHeader } from "@/components/site-chrome";
 import "./globals.css";
 
@@ -21,11 +23,11 @@ export const metadata: Metadata = {
     template: "%s · HARF",
   },
   description:
-    "A living record of how people experience and adapt to artificial intelligence. Share your experience, take the survey, or explore the archive.",
+    "Documenting how artificial intelligence is reshaping the way we think, learn, work, and relate to one another — as the transformation unfolds.",
 };
 
 export const viewport: Viewport = {
-  themeColor: "#f4efe6",
+  themeColor: "#1b2136",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
@@ -36,6 +38,9 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <SiteHeader />
         <main className="flex-1">{children}</main>
         <SiteFooter />
+        <Suspense>
+          <Analytics />
+        </Suspense>
       </body>
     </html>
   );
