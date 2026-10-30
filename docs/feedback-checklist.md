@@ -59,7 +59,7 @@ Sandra's review of harf.media, item by item. `[x]` = done and checked on the sit
 - [x] "Founded by Sandra Boccia" with the biography as written
 - [ ] Photograph: placeholder with initials until Sandra sends the file
 - [x] Discreet, editorial presentation
-- [?] Nothing that suggests an official Harvard project. The accent color is close to Harvard crimson; see notes
+- [x] Nothing that suggests an official Harvard project. Accent color kept for now (decided Oct 29); see notes
 
 ## 11. Question of the Week
 - [x] Prominent and easy to find
@@ -102,7 +102,7 @@ an observatory section, automated reports, recommendation systems, automated edi
 
 - **Harvard look (item 10).** Nothing on the site uses Harvard's name, crest or logo outside Sandra's biography.
   But the accent red (`#a51c30`) is Harvard's official crimson, and next to the navy and serif type it could
-  read as Harvard branding. Suggest moving the accent to a distinct color; it's one value in `globals.css`.
+  read as Harvard branding. Decision (Oct 29): keep it for now and revisit with the visual identity. It's one value in `globals.css`.
 - **Founder photo (item 10).** Save it as `public/founder.jpg` and replace the "SB" placeholder in
   `src/app/about/page.tsx`.
 - **Survey six-month opt-in (item 7).** After the survey, people can leave an email for the six-month invitation.
