@@ -48,6 +48,10 @@ async function publish(args: PublishArgs) {
   const themes = (args.themes ?? []).filter((t): t is string => !!t && (THEMES as readonly string[]).includes(t));
   const now = new Date().toISOString();
   const excerptId = (testimony.excerptId as string | undefined) ?? randomUUID();
+  // Re-publishing replaces the excerpt; keep an editor's "featured" choice.
+  const existing = testimony.excerptId
+    ? (await db.send(new GetCommand({ TableName: EXCERPT_TABLE, Key: { id: excerptId } }))).Item
+    : undefined;
   const excerpt = {
     id: excerptId,
     __typename: "Excerpt",
@@ -61,6 +65,7 @@ async function publish(args: PublishArgs) {
     contributedOn: `${(testimony.submittedAt as string).slice(0, 7)}-01`,
     publishedAt: now,
     synthetic: testimony.synthetic === true,
+    featured: existing?.featured === true,
   };
 
   await db.send(

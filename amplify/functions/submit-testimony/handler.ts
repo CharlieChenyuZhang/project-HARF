@@ -1,8 +1,9 @@
-import { createHash, randomBytes, randomUUID } from "node:crypto";
+import { randomBytes, randomUUID } from "node:crypto";
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import { DynamoDBDocumentClient, PutCommand, QueryCommand, TransactWriteCommand } from "@aws-sdk/lib-dynamodb";
 import { CopyObjectCommand, DeleteObjectCommand, HeadObjectCommand, S3Client } from "@aws-sdk/client-s3";
 import type { Schema } from "../../data/resource";
+import { EMAIL_PATTERN, participantRefFor } from "../shared/participant-ref";
 import {
   ACADEMIC_STAGES,
   AGE_RANGES,
@@ -11,6 +12,7 @@ import {
   AI_USES,
   AI_USE_FREQUENCIES,
   GENDERS,
+  NOTICED_CHANGE,
   CONSENT_VERSION,
   FEELINGS,
   LANGUAGES,
@@ -112,7 +114,6 @@ function newParticipantCode(): string {
   return `HARF-${chars.slice(0, 4).join("")}-${chars.slice(4, 8).join("")}-${chars.slice(8, 12).join("")}`;
 }
 
-const participantRefFor = (code: string) => createHash("sha256").update(`harf:${code}`).digest("hex");
 
 export const handler: Schema["submitTestimony"]["functionHandler"] = async (event) => {
   const args = event.arguments;
@@ -141,6 +142,7 @@ export const handler: Schema["submitTestimony"]["functionHandler"] = async (even
     let promptId: string | undefined;
     let promptText: string | undefined;
     let weeklyQuestionId: string | undefined;
+    let weeklyQuestionWeekOf: string | undefined;
 
     if (channel === "WEEKLY_QUESTION") {
       weeklyQuestionId = clean(args.weeklyQuestionId, 64);
@@ -156,6 +158,7 @@ export const handler: Schema["submitTestimony"]["functionHandler"] = async (even
       if (!question) throw new ValidationError("Unknown weekly question.");
       promptId = `weekly:${weeklyQuestionId}`;
       promptText = question.question as string;
+      weeklyQuestionWeekOf = question.weekOf as string;
     } else if (args.promptId) {
       const prompt = OPTIONAL_PROMPTS.find((p) => p.id === args.promptId);
       if (!prompt) throw new ValidationError("Unknown prompt.");
@@ -206,7 +209,7 @@ export const handler: Schema["submitTestimony"]["functionHandler"] = async (even
     const consentContact = args.consentContact === true;
     const contactEmail = consentContact ? clean(args.contactEmail, 254) : undefined;
     const contactName = consentContact ? clean(args.contactName) : undefined;
-    if (contactEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contactEmail)) {
+    if (contactEmail && !EMAIL_PATTERN.test(contactEmail)) {
       throw new ValidationError("Please check the email address.");
     }
     const contactId = contactEmail ? randomUUID() : undefined;
@@ -224,6 +227,9 @@ export const handler: Schema["submitTestimony"]["functionHandler"] = async (even
       promptId,
       promptText,
       weeklyQuestionId,
+      weeklyQuestionWeekOf,
+      noticedChange: oneOf(args.noticedChange, NOTICED_CHANGE),
+      firstNoticed: clean(args.firstNoticed, 5000),
       participantRef,
       entryNumber,
       relationship: oneOf(args.relationship, RELATIONSHIPS),
@@ -266,6 +272,9 @@ export const handler: Schema["submitTestimony"]["functionHandler"] = async (even
                     Item: {
                       id: contactId,
                       __typename: "Contact",
+                  purpose: "INTERVIEW",
+                  source: "story",
+                  consentVersion: CONSENT_VERSION,
                       createdAt: now,
                       updatedAt: now,
                       testimonyId,

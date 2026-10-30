@@ -6,6 +6,10 @@
  *
  * Every record is marked `synthetic: true` and uses a `seed-` id prefix, so
  * re-running is idempotent and the samples are easy to filter out of exports.
+ * The samples are private test data for the editor dashboard only: nothing is
+ * published to the public archive, and no Question of the Week is created.
+ * `--remove` also cleans up excerpts and the weekly question that older
+ * versions of this script created.
  * Reads amplify_outputs.json to find the deployed API and its tables.
  */
 import { createHash } from "node:crypto";
@@ -258,32 +262,13 @@ async function main() {
     consentVersion: CONSENT_VERSION,
     consentRecordedAt: s.at,
     synthetic: true,
-    editorialStatus: s.status,
+    editorialStatus: s.status === "PUBLISHED" ? "APPROVED" : s.status,
     themes: s.themes ?? [],
     excerptDraft: s.excerpt,
-    excerptId: s.status === "PUBLISHED" ? `${s.id}-excerpt` : undefined,
     reviewedAt: s.status === "NEW" ? undefined : now,
   }));
-  const excerpts = SEEDS.filter((s) => s.status === "PUBLISHED" && s.excerpt).map((s) => ({
-    id: `${s.id}-excerpt`,
-    __typename: "Excerpt",
-    createdAt: now,
-    updatedAt: now,
-    text: s.excerpt,
-    themes: s.themes,
-    participantCategory: s.relationship,
-    language: "en",
-    contributedOn: `${s.at.slice(0, 7)}-01`,
-    publishedAt: s.at,
-    synthetic: true,
-  }));
-
   await batch(table("Testimony"), testimonies.map((Item) => ({ PutRequest: { Item } })));
-  await batch(table("Excerpt"), excerpts.map((Item) => ({ PutRequest: { Item } })));
-  await batch(table("WeeklyQuestion"), [
-    { PutRequest: { Item: { ...WEEKLY, __typename: "WeeklyQuestion", createdAt: now, updatedAt: now } } },
-  ]);
-  console.log(`Seeded ${testimonies.length} testimonies, ${excerpts.length} excerpts and 1 weekly question (all fictional).`);
+  console.log(`Seeded ${testimonies.length} private, fictional testimonies (nothing published).`);
 }
 
 main().catch((e) => {

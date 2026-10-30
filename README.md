@@ -10,12 +10,12 @@ work and feel, and where HARF editors review, theme and publish anonymized excer
 | Route | Purpose |
 | --- | --- |
 | `/` | Landing page: the idea, three actions, Question of the Week, archive preview |
-| `/share/` | Open testimony in three steps: write → optional context → consent. Returns a private participant code |
+| `/share/` | Story in three steps: opening question and a specific moment → optional context → consent. Ends with a thank-you, a reflection and an optional six-month invitation |
 | `/share/?weekly=<id>` | Respond to the Question of the Week |
 | `/archive/` | Published excerpts, filterable by theme |
-| `/survey/` | The existing Tally questionnaire (embedded + link), a separate pathway |
-| `/privacy/`, `/about/` | Privacy notice (draft) and project background |
-| `/admin/` | Editors only: review, theme, notes, approve & publish excerpts, delete on request, Question of the Week, CSV/JSON export |
+| `/survey/` | The existing Tally questionnaire, unchanged; HARF's thank-you appears when it's submitted |
+| `/privacy/`, `/about/` | Privacy notice with a withdrawal form; About with the founder |
+| `/admin/` | Editors only: review, theme, publish and feature excerpts, Question of the Week, withdrawal requests, analytics, CSV/JSON export |
 
 ## Stack
 
@@ -28,7 +28,9 @@ work and feel, and where HARF editors review, theme and publish anonymized excer
 ```
 Testimony       private   original text (immutable), context, consent record + version, participantRef,
                           editorial status, themes, notes, excerpt draft
-Contact         private   separate table; only exists if the participant opted in to follow-up
+Contact         private   separate table; interview or six-month-revisit opt-ins (with remindAfter)
+WithdrawalRequest private removal requests from the privacy page
+AnalyticsEvent  private   anonymous usage events, auto-deleted after ~13 months (DynamoDB TTL)
 Excerpt         public    edited, anonymized excerpt; no link back to the private testimony
 WeeklyQuestion  public    Question of the Week, managed in the dashboard
 

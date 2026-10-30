@@ -37,6 +37,20 @@ await expect("guest cannot create excerpts", false, () =>
 await expect("guest cannot create weekly questions", false, () =>
   client.models.WeeklyQuestion.create({ question: "x", weekOf: "2026-01-01", active: true }),
 );
+await expect("guest cannot read analytics events", false, () => client.models.AnalyticsEvent.list());
+await expect("guest cannot read withdrawal requests", false, () => client.models.WithdrawalRequest.list());
+await expect("guest cannot feature an excerpt", false, () => client.models.Excerpt.update({ id: "any", featured: true }));
+await expect("guest cannot record an unknown event", false, () => client.mutations.track({ name: "not_an_event" }));
+await expect("guest cannot attach a revisit email to someone else's story", false, () =>
+  client.mutations.requestRevisit({
+    email: "someone@example.com",
+    consent: true,
+    consentVersion: CONSENT_VERSION,
+    source: "story",
+    testimonyId: "not-theirs",
+    participantCode: "HARF-AAAA-BBBB-CCCC",
+  }),
+);
 await expect("guest cannot publish", false, () =>
   client.mutations.publishExcerpt({ testimonyId: "seed-0001", text: "x" }),
 );

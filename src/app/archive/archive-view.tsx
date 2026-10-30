@@ -74,7 +74,7 @@ export function ArchiveView() {
           <p className="font-serif text-2xl">
             {theme ? `No published stories on ${theme} yet.` : "The first stories are being reviewed."}
           </p>
-          <Link href="/share/" className="mt-3 inline-block text-sm text-accent underline">
+          <Link href="/share/" data-track="share_click" data-track-from="archive_empty" className="mt-3 inline-block py-2 text-sm text-accent underline">
             Share yours
           </Link>
         </div>

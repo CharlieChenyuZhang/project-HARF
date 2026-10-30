@@ -1,6 +1,7 @@
 import { a, defineData, type ClientSchema } from "@aws-amplify/backend";
 import { submitTestimony } from "../functions/submit-testimony/resource";
 import { editorial } from "../functions/editorial/resource";
+import { participant } from "../functions/participant/resource";
 
 /*
  * Data model
@@ -10,7 +11,11 @@ import { editorial } from "../functions/editorial/resource";
  *                submitTestimony function; editors can read it but can never
  *                change the original text, context or consent fields.
  * Contact        private, separate table. Only exists when the participant
- *                opted in to follow-up contact.
+ *                opted in: to an interview (from the consent step) or to a
+ *                six-month invitation to revisit their answers.
+ * WithdrawalRequest  private. Removal requests sent from the privacy page.
+ * AnalyticsEvent private, anonymous usage events written by the participant
+ *                function; they expire after about 13 months.
  *
  * Deletion goes through the removeTestimony function so a testimony never
  * leaves an orphaned contact record or public excerpt behind.
@@ -50,6 +55,9 @@ const schema = a.schema({
       channel: a.ref("Channel").authorization(editorsReadOnly),
       promptId: a.string().authorization(editorsReadOnly),
       promptText: a.string().authorization(editorsReadOnly),
+      weeklyQuestionWeekOf: a.date().authorization(editorsReadOnly),
+      noticedChange: a.string().authorization(editorsReadOnly),
+      firstNoticed: a.string().authorization(editorsReadOnly),
       weeklyQuestionId: a.id().authorization(editorsReadOnly),
       participantRef: a.string().required().authorization(editorsReadOnly),
       entryNumber: a.integer().authorization(editorsReadOnly),
@@ -90,13 +98,19 @@ const schema = a.schema({
     ])
     .authorization((allow) => [allow.group("ADMINS").to(["read", "update"])]),
 
+  ContactPurpose: a.enum(["INTERVIEW", "SIX_MONTH_REVISIT"]),
+
   Contact: a
     .model({
-      testimonyId: a.id().required(),
-      participantRef: a.string().required(),
+      purpose: a.ref("ContactPurpose"),
+      source: a.string(), // "story" or "survey"
+      testimonyId: a.id(), // absent for survey opt-ins: Tally keeps its own responses
+      participantRef: a.string(),
       name: a.string(),
       email: a.email(),
       notes: a.string(),
+      remindAfter: a.date(),
+      consentVersion: a.string(),
     })
     .authorization((allow) => [allow.group("ADMINS").to(["read"])]),
 
@@ -109,8 +123,30 @@ const schema = a.schema({
       contributedOn: a.date(),
       publishedAt: a.datetime().required(),
       synthetic: a.boolean(),
+      featured: a.boolean(), // hand-picked by an editor for the homepage
     })
-    .authorization((allow) => [allow.guest().to(["read"]), allow.group("ADMINS").to(["read"])]),
+    .authorization((allow) => [allow.guest().to(["read"]), allow.group("ADMINS").to(["read", "update"])]),
+
+  WithdrawalRequest: a
+    .model({
+      participantRef: a.string(),
+      message: a.string().required(),
+      replyEmail: a.email(),
+      resolved: a.boolean(),
+    })
+    .authorization((allow) => [allow.group("ADMINS").to(["read", "update", "delete"])]),
+
+  AnalyticsEvent: a
+    .model({
+      name: a.string().required(),
+      path: a.string(),
+      referrer: a.string(),
+      device: a.string(),
+      visitorId: a.string(),
+      from: a.string(),
+      expiresAt: a.timestamp(),
+    })
+    .authorization((allow) => [allow.group("ADMINS").to(["read"])]),
 
   WeeklyQuestion: a
     .model({
@@ -158,6 +194,8 @@ const schema = a.schema({
       consentVersion: a.string().required(),
       contactName: a.string(),
       contactEmail: a.string(),
+      noticedChange: a.string(),
+      firstNoticed: a.string(),
       mediaKeys: a.string().array(), // S3 keys under uploads/, from the browser upload
       website: a.string(), // honeypot: real people leave this empty
     })
@@ -185,6 +223,43 @@ const schema = a.schema({
     .returns(a.boolean())
     .authorization((allow) => [allow.group("ADMINS")])
     .handler(a.handler.function(editorial)),
+
+  // Optional invitation to come back in six months. A story opt-in must prove
+  // it owns the testimony with the participant code returned on submission.
+  requestRevisit: a
+    .mutation()
+    .arguments({
+      email: a.string().required(),
+      consent: a.boolean().required(),
+      consentVersion: a.string().required(),
+      source: a.string().required(),
+      testimonyId: a.id(),
+      participantCode: a.string(),
+    })
+    .returns(a.boolean())
+    .authorization((allow) => [allow.guest(), allow.authenticated()])
+    .handler(a.handler.function(participant)),
+
+  requestWithdrawal: a
+    .mutation()
+    .arguments({ message: a.string().required(), participantCode: a.string(), replyEmail: a.string() })
+    .returns(a.boolean())
+    .authorization((allow) => [allow.guest(), allow.authenticated()])
+    .handler(a.handler.function(participant)),
+
+  track: a
+    .mutation()
+    .arguments({
+      name: a.string().required(),
+      path: a.string(),
+      referrer: a.string(),
+      device: a.string(),
+      visitorId: a.string(),
+      from: a.string(),
+    })
+    .returns(a.boolean())
+    .authorization((allow) => [allow.guest(), allow.authenticated()])
+    .handler(a.handler.function(participant)),
 
   unpublishExcerpt: a
     .mutation()
