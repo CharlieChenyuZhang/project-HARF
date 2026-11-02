@@ -28,6 +28,7 @@ async function expect(name: string, shouldSucceed: boolean, run: () => Promise<{
 }
 
 await expect("guest reads published excerpts", true, () => client.models.Excerpt.list());
+await expect("guest reads rounded community counts", true, () => client.queries.communityStats());
 await expect("guest reads weekly questions", true, () => client.models.WeeklyQuestion.list());
 await expect("guest cannot list testimonies", false, () => client.models.Testimony.list());
 await expect("guest cannot list contacts", false, () => client.models.Contact.list());

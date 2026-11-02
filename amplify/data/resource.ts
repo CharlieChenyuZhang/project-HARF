@@ -85,6 +85,7 @@ const schema = a.schema({
       contactId: a.id().authorization(editorsReadOnly),
       media: a.ref("MediaItem").array().authorization(editorsReadOnly),
       synthetic: a.boolean().authorization(editorsReadOnly),
+      tone: a.string().authorization(editorsReadOnly), // broad word-list label from src/lib/tone.ts, for community counts
       // Editorial layer. Kept apart from the original text.
       editorialStatus: a.ref("EditorialStatus").required(),
       themes: a.string().array(),
@@ -162,6 +163,20 @@ const schema = a.schema({
     participantCode: a.string().required(),
     entryNumber: a.integer().required(),
   }),
+
+  CommunityStat: a.customType({
+    dimension: a.string().required(),
+    label: a.string().required(),
+    count: a.integer().required(),
+    respondents: a.integer().required(),
+  }),
+
+  // Rounded counts for the charts shown after a story; small groups are left out.
+  communityStats: a
+    .query()
+    .returns(a.ref("CommunityStat").array())
+    .authorization((allow) => [allow.guest(), allow.authenticated()])
+    .handler(a.handler.function(participant)),
 
   submitTestimony: a
     .mutation()

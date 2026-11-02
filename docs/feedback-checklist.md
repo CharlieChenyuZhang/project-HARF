@@ -98,6 +98,9 @@ Sandra's review of harf.media, item by item. `[x]` = done and checked on the sit
 User accounts, forums, public profiles, complex dashboards, AI personality assessments,
 an observatory section, automated reports, recommendation systems, automated editorial analysis.
 
+Exception, added after that review: participants see a short analysis after their story (word-list tone and rounded
+community charts). It describes the text, not the person, and editors make no decision from it.
+
 ## Notes
 
 - **Harvard look (item 10).** Nothing on the site uses Harvard's name, crest or logo outside Sandra's biography.

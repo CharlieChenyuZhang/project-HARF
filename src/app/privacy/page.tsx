@@ -2,6 +2,7 @@ import {
   BarChart3,
   Database,
   Eye,
+  Gauge,
   HelpCircle,
   KeyRound,
   Lock,
@@ -54,6 +55,11 @@ const SECTIONS: { icon: LucideIcon; title: string; body: string }[] = [
     icon: KeyRound,
     title: "Your participant code",
     body: "Links your contributions over time without identifying you. We store only a one-way fingerprint of it, so we can't look it up or recover it.",
+  },
+  {
+    icon: Gauge,
+    title: "The analysis after your story",
+    body: "When you submit an English story, a simple word list estimates its tone, with no outside AI service involved. We keep only a broad label (such as “Mixed”) with your contribution, and it is deleted with it. The charts you see count people, leave out any group smaller than five, and round the numbers, so nobody can be picked out.",
   },
   {
     icon: BarChart3,
