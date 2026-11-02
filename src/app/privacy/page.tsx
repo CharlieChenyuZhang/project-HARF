@@ -59,7 +59,7 @@ const SECTIONS: { icon: LucideIcon; title: string; body: string }[] = [
   {
     icon: Gauge,
     title: "The analysis after your story",
-    body: "When you submit an English story, a simple word list estimates its tone, with no outside AI service involved. We keep only a broad label (such as “Mixed”) with your contribution, and it is deleted with it. The charts you see count people, leave out any group smaller than five, and round the numbers, so nobody can be picked out.",
+    body: "When you submit an English story, a simple word list estimates its tone, with no outside AI service involved. We keep only a broad label (such as “Mixed”) with your contribution, and it is deleted with it. The tables you see count people, leave out any group smaller than five, and round the numbers, so nobody can be picked out.",
   },
   {
     icon: BarChart3,
