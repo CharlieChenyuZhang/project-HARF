@@ -99,7 +99,7 @@ User accounts, forums, public profiles, complex dashboards, AI personality asses
 an observatory section, automated reports, recommendation systems, automated editorial analysis.
 
 Exception, added after that review: participants see a short analysis after their story (word-list tone and rounded
-community charts). It describes the text, not the person, and editors make no decision from it.
+community tables). It describes the text, not the person, and editors make no decision from it.
 
 ## Notes
 
