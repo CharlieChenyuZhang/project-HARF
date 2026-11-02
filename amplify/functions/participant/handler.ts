@@ -1,13 +1,14 @@
 import { randomUUID } from "node:crypto";
 import type { AppSyncResolverEvent } from "aws-lambda";
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
-import { DynamoDBDocumentClient, GetCommand, PutCommand } from "@aws-sdk/lib-dynamodb";
+import { DynamoDBDocumentClient, GetCommand, PutCommand, ScanCommand } from "@aws-sdk/lib-dynamodb";
 import {
   ANALYTICS_EVENTS,
   CONSENT_VERSION,
   PARTICIPANT_CODE_PATTERN,
   normalizeParticipantCode,
 } from "../../../src/lib/harf";
+import { summarizeCommunity, type CommunityRecord, type CommunityRow } from "../../../src/lib/community";
 import { EMAIL_PATTERN, participantRefFor } from "../shared/participant-ref";
 
 const db = DynamoDBDocumentClient.from(new DynamoDBClient({}), {
@@ -134,6 +135,31 @@ async function track(args: Record<string, unknown>) {
   return true;
 }
 
+const STATS_TTL = 5 * 60 * 1000;
+let statsCache: { at: number; rows: CommunityRow[] } | null = null;
+
+/** Guests can call this, so it reads only the fields it counts and at most once per five minutes. */
+async function communityStats() {
+  if (statsCache && Date.now() - statsCache.at < STATS_TTL) return statsCache.rows;
+  const records: CommunityRecord[] = [];
+  let ExclusiveStartKey: Record<string, unknown> | undefined;
+  do {
+    const page = await db.send(
+      new ScanCommand({
+        TableName: TESTIMONY_TABLE,
+        ProjectionExpression:
+          "participantRef, synthetic, editorialStatus, tone, feelings, aiUseFrequency, mainAiTool, noticedChange",
+        ExclusiveStartKey,
+      }),
+    );
+    records.push(...((page.Items ?? []) as CommunityRecord[]));
+    ExclusiveStartKey = page.LastEvaluatedKey;
+  } while (ExclusiveStartKey);
+  const rows = summarizeCommunity(records);
+  statsCache = { at: Date.now(), rows };
+  return rows;
+}
+
 type ResolverEvent = AppSyncResolverEvent<Record<string, unknown>> & { fieldName?: string };
 
 export const handler = async (event: ResolverEvent) => {
@@ -142,6 +168,7 @@ export const handler = async (event: ResolverEvent) => {
     if (fieldName === "requestRevisit") return await requestRevisit(event.arguments);
     if (fieldName === "requestWithdrawal") return await requestWithdrawal(event.arguments);
     if (fieldName === "track") return await track(event.arguments);
+    if (fieldName === "communityStats") return await communityStats();
     throw new Error(`Unsupported operation ${fieldName}`);
   } catch (err) {
     if (err instanceof ValidationError) throw new Error(err.message);

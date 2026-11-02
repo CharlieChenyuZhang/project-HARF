@@ -10,7 +10,7 @@ work and feel, and where HARF editors review, theme and publish anonymized excer
 | Route | Purpose |
 | --- | --- |
 | `/` | Landing page: the idea, three actions, Question of the Week, archive preview |
-| `/share/` | Story in three steps: opening question and a specific moment → optional context → consent. Ends with a thank-you, a reflection and an optional six-month invitation |
+| `/share/` | Story in three steps: opening question and a specific moment → optional context → consent. Ends with a thank-you, a reflection, a short analysis (word-list tone, 3D community charts) and an optional six-month invitation |
 | `/share/?weekly=<id>` | Respond to the Question of the Week |
 | `/archive/` | Published excerpts, filterable by theme |
 | `/survey/` | The existing Tally questionnaire, unchanged; HARF's thank-you appears when it's submitted |
@@ -53,6 +53,9 @@ Rules enforced on the server, not just in the UI:
 - **Attachments:** up to 5 images, audio or video files (50 MB each) per testimony. Files upload only when the
   participant submits, after consent. `submitTestimony` checks each file's type and size and moves it to
   `media/<testimonyId>/`, which only editors can read. The testimony stores just the keys.
+- **Analysis after a story:** `src/lib/tone.ts` reads tone from an English word list, in the browser for display and in
+  `submitTestimony` for the stored label. `communityStats` is the only guest route to other people's answers: it counts
+  people, drops groups under 5 and rounds to 5 (`src/lib/community.ts`).
 - Point-in-time recovery (35 days) is enabled on every table; the media bucket is versioned with old versions
   expiring after 35 days. Self sign-up is disabled in Cognito.
 

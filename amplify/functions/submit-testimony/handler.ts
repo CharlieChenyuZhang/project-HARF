@@ -25,6 +25,7 @@ import {
   isAllowedMediaType,
   normalizeParticipantCode,
 } from "../../../src/lib/harf";
+import { readTone } from "../../../src/lib/tone";
 
 const db = DynamoDBDocumentClient.from(new DynamoDBClient({}), {
   marshallOptions: { removeUndefinedValues: true },
@@ -256,6 +257,7 @@ export const handler: Schema["submitTestimony"]["functionHandler"] = async (even
       contactId,
       media: media.length ? media : undefined,
       synthetic: false,
+      tone: readTone(text)?.tone,
       editorialStatus: "NEW",
       themes: [],
     };

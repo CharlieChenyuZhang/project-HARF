@@ -16,6 +16,7 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useId, useMemo, useRef, useState, type ReactNode } from "react";
 import { MediaPicker } from "./media-picker";
+import { StoryAnalysis, type OwnAnswers } from "./story-analysis";
 import { uploadData } from "aws-amplify/storage";
 import { ContributionThanks } from "@/components/contribution-thanks";
 import { track } from "@/lib/analytics";
@@ -226,7 +227,15 @@ export function ShareFlow() {
     }
   }
 
-  if (step === "done" && result) return <Done result={result} />;
+  if (step === "done" && result) {
+    return (
+      <Done
+        result={result}
+        text={text}
+        answers={{ feelings, aiUseFrequency: frequency, mainAiTool, noticedChange }}
+      />
+    );
+  }
 
   const stepIndex = STEPS.findIndex((s) => s.id === step);
 
@@ -664,7 +673,7 @@ export function ShareFlow() {
 
 type Result = { testimonyId: string; participantCode: string; entryNumber: number };
 
-function Done({ result }: { result: Result }) {
+function Done({ result, text, answers }: { result: Result; text: string; answers: OwnAnswers }) {
   const [copied, setCopied] = useState(false);
   const [remembered, setRemembered] = useState(false);
 
@@ -706,6 +715,7 @@ function Done({ result }: { result: Result }) {
             </button>
           </div>
         </div>
+        <StoryAnalysis text={text} answers={answers} />
       </ContributionThanks>
     </div>
   );
