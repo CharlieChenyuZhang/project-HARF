@@ -10,7 +10,7 @@ work and feel, and where HARF editors review, theme and publish anonymized excer
 | Route | Purpose |
 | --- | --- |
 | `/` | Landing page: the idea, three actions, Question of the Week, archive preview |
-| `/share/` | Story in three steps: opening question and a specific moment → optional context → consent. Ends with a thank-you, a reflection, a short analysis (word-list tone, community tables) and an optional six-month invitation |
+| `/share/` | Story in three steps: opening question and a specific moment → optional context → consent. Ends with a thank-you, a reflection, a short analysis (word-list tone, community charts) and an optional six-month invitation |
 | `/share/?weekly=<id>` | Respond to the Question of the Week |
 | `/archive/` | Published excerpts, filterable by theme |
 | `/survey/` | The existing Tally questionnaire, unchanged; HARF's thank-you appears when it's submitted |

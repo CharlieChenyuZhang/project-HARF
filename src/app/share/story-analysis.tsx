@@ -1,10 +1,11 @@
 "use client";
 
-import { MotionConfig, motion } from "motion/react";
+import { MotionConfig } from "motion/react";
 import { useEffect, useMemo, useState } from "react";
 import { client } from "@/lib/amplify";
 import { COMMUNITY_DIMENSIONS, MIN_GROUP, type CommunityDimension, type CommunityRow } from "@/lib/community";
 import { readTone, type Tone } from "@/lib/tone";
+import { PeopleWaffle, RankedBars, ScaleColumns, ShareDonut, ToneStack, type Share } from "./community-charts";
 
 export type OwnAnswers = {
   feelings: string[];
@@ -19,8 +20,6 @@ const TONE_SENTENCE: Record<Tone, string> = {
   Mixed: "Your story holds positive and negative words in similar measure.",
   Neutral: "Your story doesn't use many strongly positive or negative words.",
 };
-
-type Share = { label: string; percent: number; mine: boolean };
 
 /** What the participant sees right after submitting. Everything except the code and thanks is optional extra. */
 export function StoryAnalysis({ text, answers }: { text: string; answers: OwnAnswers }) {
@@ -40,15 +39,16 @@ export function StoryAnalysis({ text, answers }: { text: string; answers: OwnAns
     return answers[dimension] === label;
   };
 
-  const tables = COMMUNITY_DIMENSIONS.map(({ key, title }) => {
+  const charts = COMMUNITY_DIMENSIONS.map(({ key, title }) => {
     const group = (rows ?? []).filter((r) => r.dimension === key);
     const shares: Share[] = group.map((r) => ({
       label: r.label,
+      fraction: r.respondents ? r.count / r.respondents : 0,
       percent: r.respondents ? Math.round((r.count / r.respondents) * 100) : 0,
       mine: mine(key, r.label),
     }));
     return { key, title, shares, respondents: group[0]?.respondents ?? 0 };
-  }).filter((t) => t.shares.length >= 2);
+  }).filter((c) => c.shares.length >= 2);
 
   return (
     <MotionConfig reducedMotion="user">
@@ -88,24 +88,31 @@ export function StoryAnalysis({ text, answers }: { text: string; answers: OwnAns
 
         {rows === null ? <p className="text-sm text-muted">Loading what others have shared…</p> : null}
 
-        {tables.map((table) => (
-          <figure key={table.key} className="rounded-lg bg-card p-6 ring-1 ring-rule sm:p-8">
+        {charts.map((chart) => (
+          <figure key={chart.key} className="rounded-lg bg-card p-6 ring-1 ring-rule sm:p-8">
             <figcaption>
-              <p className="font-serif text-2xl leading-snug">{table.title}</p>
+              <p className="font-serif text-2xl leading-snug">{chart.title}</p>
               <p className="mt-1 text-xs text-muted">
-                Share of about {table.respondents} people who answered
-                {table.key === "feelings" ? ". People could pick several, so these add up to more than 100%" : ""}
+                Share of about {chart.respondents} people who answered
+                {chart.key === "feelings" ? ". People could pick several, so these add up to more than 100%" : ""}
               </p>
             </figcaption>
-            <ShareTable shares={table.shares} />
+            <div aria-hidden>
+              {chart.key === "tone" ? <ToneStack shares={chart.shares} /> : null}
+              {chart.key === "feelings" ? <RankedBars shares={chart.shares} /> : null}
+              {chart.key === "aiUseFrequency" ? <ScaleColumns shares={chart.shares} /> : null}
+              {chart.key === "mainAiTool" ? <ShareDonut shares={chart.shares} respondents={chart.respondents} /> : null}
+              {chart.key === "noticedChange" ? <PeopleWaffle shares={chart.shares} /> : null}
+            </div>
+            <ShareTable shares={chart.shares} />
           </figure>
         ))}
 
         {rows !== null ? (
           <p className="text-xs leading-relaxed text-muted">
-            {tables.length
+            {charts.length
               ? `Counts are rounded to the nearest ${MIN_GROUP}, and groups smaller than ${MIN_GROUP} people aren't shown. Your own group may be missing for that reason, and your story may take a few minutes to be counted.`
-              : `Tables of what others have shared appear once enough people have taken part. We never show groups smaller than ${MIN_GROUP} people.`}
+              : `Charts of what others have shared appear once enough people have taken part. We never show groups smaller than ${MIN_GROUP} people.`}
           </p>
         ) : null}
       </section>
@@ -115,48 +122,27 @@ export function StoryAnalysis({ text, answers }: { text: string; answers: OwnAns
 
 function ShareTable({ shares }: { shares: Share[] }) {
   return (
-    <table className="mt-4 w-full text-sm">
-      <thead>
-        <tr className="text-xs text-muted">
-          <th scope="col" className="pb-2 text-left font-normal">
-            Answer
-          </th>
-          <th scope="col" className="w-px whitespace-nowrap pb-2 pl-4 text-right font-normal">
-            Share
-          </th>
-        </tr>
-      </thead>
-      <tbody>
-        {shares.map((share, i) => (
-          <motion.tr
-            key={share.label}
-            className="border-t border-rule"
-            initial={{ opacity: 0 }}
-            whileInView={{ opacity: 1 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.3, delay: i * 0.05 }}
-          >
-            <th scope="row" className={`py-2.5 text-left ${share.mine ? "font-semibold" : "font-normal"}`}>
-              {share.label}
-              {share.mine ? <span className="text-accent"> · You</span> : null}
-              <span aria-hidden className="mt-1.5 block h-1 rounded-full bg-rule/60">
-                <motion.span
-                  className={`block h-full rounded-full ${share.mine ? "bg-accent" : "bg-navy-soft/60"}`}
-                  style={{ width: `${share.percent}%`, originX: 0 }}
-                  initial={{ scaleX: 0 }}
-                  whileInView={{ scaleX: 1 }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 0.6, delay: i * 0.05, ease: "easeOut" }}
-                />
-              </span>
-            </th>
-            <td className={`w-px whitespace-nowrap py-2.5 pl-4 text-right align-top tabular-nums ${share.mine ? "font-semibold" : ""}`}>
-              {share.percent}%
-            </td>
-          </motion.tr>
-        ))}
-      </tbody>
-    </table>
+    <div className="sr-only">
+      <table>
+        <thead>
+          <tr>
+            <th scope="col">Answer</th>
+            <th scope="col">Share</th>
+          </tr>
+        </thead>
+        <tbody>
+          {shares.map((share) => (
+            <tr key={share.label}>
+              <th scope="row">
+                {share.label}
+                {share.mine ? " (you)" : ""}
+              </th>
+              <td>{share.percent}%</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
   );
 }
 

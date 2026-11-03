@@ -171,7 +171,7 @@ const schema = a.schema({
     respondents: a.integer().required(),
   }),
 
-  // Rounded counts for the tables shown after a story; small groups are left out.
+  // Rounded counts for the charts shown after a story; small groups are left out.
   communityStats: a
     .query()
     .returns(a.ref("CommunityStat").array())
