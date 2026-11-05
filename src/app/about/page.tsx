@@ -2,6 +2,7 @@ import { Archive, Lightbulb, Repeat, Telescope } from "lucide-react";
 import type { Metadata } from "next";
 import { CircleLink } from "@/components/circle-link";
 import { IconCard, PageHero } from "@/components/page-hero";
+import { TeamSection } from "@/components/team-section";
 
 export const metadata: Metadata = {
   title: "About",
@@ -59,26 +60,9 @@ export default function AboutPage() {
         </ul>
       </section>
 
-      <section className="mx-auto max-w-6xl px-5 pt-24">
-        <div className="grid gap-8 border-t border-rule pt-10 sm:grid-cols-[160px_1fr] sm:gap-10">
-          {/* eslint-disable-next-line @next/next/no-img-element -- static export: images are served unoptimized */}
-          <img
-            src="/team/sandra-boccia.jpg"
-            alt="Portrait of Sandra Boccia"
-            className="aspect-square w-32 rounded-full object-cover object-top ring-1 ring-rule sm:w-40"
-          />
-          <div className="max-w-2xl">
-            <p className="eyebrow">Founded by</p>
-            <h2 className="mt-2 font-serif text-3xl">Sandra Boccia</h2>
-            <p className="mt-4 leading-relaxed text-ink-soft">
-              Sandra Boccia is a journalist, former media executive, and Fellow at Harvard University&apos;s Weatherhead
-              Center for International Affairs. Previously a Fellow of Harvard&apos;s Advanced Leadership Initiative,
-              her work explores the intersection of artificial intelligence, geopolitics, and social transformation. She
-              founded HARF to document how AI is reshaping human experience and examine its implications for society,
-              democracy, and public policy.
-            </p>
-          </div>
-        </div>
+      <TeamSection />
+
+      <section className="mx-auto max-w-6xl px-5">
         <div className="mt-14">
           <CircleLink href="/share/">Add your experience</CircleLink>
         </div>
