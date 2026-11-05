@@ -3,6 +3,7 @@ import Link from "next/link";
 import { HERO_PHOTO_CREDIT, HeroPhoto } from "@/components/hero-photo";
 import { ArchivePreview, WeeklyQuestionCard } from "@/components/home-islands";
 import { ThemeIcon } from "@/components/icons";
+import { TeamSection } from "@/components/team-section";
 import { THEMES } from "@/lib/harf";
 
 const ACTIONS: { href: string; icon: LucideIcon; title: string; text: string; time: string; track: string }[] = [
@@ -124,6 +125,8 @@ export default function Home() {
 
       {/* Hand-picked excerpts; the section hides itself until there are some. */}
       <ArchivePreview />
+
+      <TeamSection />
     </>
   );
 }
