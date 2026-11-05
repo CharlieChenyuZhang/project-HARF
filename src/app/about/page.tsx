@@ -61,13 +61,12 @@ export default function AboutPage() {
 
       <section className="mx-auto max-w-6xl px-5 pt-24">
         <div className="grid gap-8 border-t border-rule pt-10 sm:grid-cols-[160px_1fr] sm:gap-10">
-          {/* Portrait goes here once the photograph arrives (public/founder.jpg). */}
-          <div
-            aria-hidden
-            className="flex aspect-square w-32 items-center justify-center rounded-full bg-paper-deep font-serif text-3xl text-muted sm:w-40"
-          >
-            SB
-          </div>
+          {/* eslint-disable-next-line @next/next/no-img-element -- static export: images are served unoptimized */}
+          <img
+            src="/team/sandra-boccia.jpg"
+            alt="Portrait of Sandra Boccia"
+            className="aspect-square w-32 rounded-full object-cover object-top ring-1 ring-rule sm:w-40"
+          />
           <div className="max-w-2xl">
             <p className="eyebrow">Founded by</p>
             <h2 className="mt-2 font-serif text-3xl">Sandra Boccia</h2>
